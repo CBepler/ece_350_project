@@ -7,7 +7,7 @@ module register(out, d, clk, clr, read_enable, write_enable);
 
     generate
         for (i = 0; i < 32; i = i + 1) begin : dff_loop
-            DFFtri dff_instance(out[i], d[i], clk, clr, write_enable, read_enable);
+            dffe_ref a_dff(.q(out), .d(d), .clk(clk), .en(write_enable), .clr(clr));
         end
     endgenerate
 
