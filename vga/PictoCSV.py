@@ -17,7 +17,7 @@ if len(sys.argv) != 2:
     sys.exit()
 
 imageName = sys.argv[1]
-path = ""
+path = "c:\Users\cgb45\Downloads\ece_350_project-main\ece_350_project-main\vga\checkerboard.jpg"
 
 file = Image.open(imageName)
 

@@ -15,7 +15,7 @@ module VGAController(
 	inout ps2_data);
 	
 	// Lab Memory Files Location
-	localparam FILES_PATH = "C:/Users/deb48/Downloads/lab6_kit/";
+	localparam FILES_PATH = "c:\Users\cgb45\Downloads\ece_350_project-main\ece_350_project-main\vga";
 
 	// Clock divider 100 MHz -> 25 MHz
 	wire clk25; // 25MHz clock
@@ -32,11 +32,11 @@ module VGAController(
 		VIDEO_HEIGHT = 480; // Standard VGA Height
 
 	wire active, screenEnd;
-	wire[9:0] x;
-	wire[8:0] y;
+	wire[31:0] x;
+	wire[31:0] y;
 	
-	reg[9:0] box_x;
-	reg[8:0] box_y;
+	reg[31:0] box_x;
+	reg[31:0] box_y;
 	
 	initial begin
 	   box_x = 100;
@@ -57,10 +57,11 @@ module VGAController(
 	wire read_data;
 	wire[7:0] rx_data;
 	
-	Ps2Interface ps(.ps2_clk(ps2_clk ), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
+	Ps2Interface ps(.ps2_clk(ps2_clk), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
 	
+	/*
 	wire[6:0] ascii_code;
-	
+
     RAM # (		
         .DEPTH(36),  //0-9 + letters in alphabet
         .DATA_WIDTH(7), //bits in ascii code
@@ -72,7 +73,7 @@ module VGAController(
         .dataOut(ascii_code),				       
         .wEn(1'b0));
         
-   wire[2500] sprite;
+    wire[2500:0] sprite;
     
     RAM # (		
         .DEPTH(94),  
@@ -84,6 +85,7 @@ module VGAController(
         .addr(ascii_code ),					       
         .dataOut(sprite),				       
         .wEn(1'b0));
+	*/
 	
 	always @(posedge clk) begin
 	   if(read_data) begin
