@@ -1,5 +1,5 @@
 import csv
-path = ""
+path = "C:/Users/deb48/Downloads/lab6_kit/"
 
 with open(path + "colors.csv", "r") as csvFile:
        with open(path + "colors.mem", "w") as memFile:
