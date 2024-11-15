@@ -24,8 +24,9 @@
  *
  **/
 
-module Wrapper (clk_100mhz, reset, BTNU, BTNR, BTND, BTNL);
+module Wrapper (clk_100mhz, reset, BTNU, BTNR, BTND, BTNL, LED);
 	input clk_100mhz, reset, BTNU, BTNR, BTND, BTNL;
+	output [15:0] LED;
 
 	wire clock;
 	assign clock = clk_29;
@@ -90,12 +91,18 @@ module Wrapper (clk_100mhz, reset, BTNU, BTNR, BTND, BTNL);
 		.dataIn(memDataIn), 
 		.dataOut(dmemDataOut));
 
-	always @(posedge clock) begin	
-	        if(memAddr[11:0] == 0) begin
-	           assign memDataOut = button;
-	        end else begin
-	           assign memDataOut = dmemDataOut;
-	        end
-	 end
+
+	 assign memDataOut = (memAddr[11:0] == 0) ? button : dmemDataOut; 
+
+	 //VGAController control();
+
+	 wire [31:0] led_bits;
+	 assign led_bits = memDataIn;
+
+	 wire led_we;
+	 assign led_we = (mwe && memAddr[11:0] == 1) ? 1'b1 : 1'b0;
+
+
+	 led light(.leds(led_bits), .LED(LED), .clk(clk_29), .led_we(led_we));
 
 endmodule
