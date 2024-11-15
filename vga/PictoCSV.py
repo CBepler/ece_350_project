@@ -1,3 +1,4 @@
+#weird error produces file "checkerboard.jpgimage.csv"
 # Use image processing package
 import os
 import csv
@@ -17,7 +18,7 @@ if len(sys.argv) != 2:
     sys.exit()
 
 imageName = sys.argv[1]
-path = "c:\Users\cgb45\Downloads\ece_350_project-main\ece_350_project-main\vga\checkerboard.jpg"
+path = "/Users/raquel/Desktop/vga"
 
 file = Image.open(imageName)
 
