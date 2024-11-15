@@ -33,13 +33,13 @@ module buttons(
         if(BTNU) begin
             button_reg <= 1;
         end
-        if(BTNR) begin
+        else if(BTNR) begin
             button_reg <= 2;
         end
-        if(BTND) begin
+        else if(BTND) begin
             button_reg <= 3;
         end
-        if(BTNl) begin
+        else if(BTNl) begin
             button_reg <= 4;
         end
         else begin
