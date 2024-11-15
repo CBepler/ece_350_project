@@ -2,20 +2,20 @@
 module VGAController(     
 	input clk, 			// 100 MHz System Clock
 	input reset, 		// Reset Signal
+	input BTNU,
+	input BTNR,
+	input BTND,
+	input BTNL,
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
 	output[3:0] VGA_R,  // Red Signal Bits
 	output[3:0] VGA_G,  // Green Signal Bits
 	output[3:0] VGA_B,  // Blue Signal Bits
 	inout ps2_clk,
-	inout ps2_data,
-	input BTND,
-	input BTNU,
-	input BTNR,
-	input BTNL);
+	inout ps2_data);
 	
 	// Lab Memory Files Location
-	localparam FILES_PATH = "C:/Users/audre/OneDrive/Documents/ECE350/ece350/Lab6_7/lab6_kit/";
+	localparam FILES_PATH = "C:/Users/deb48/Downloads/lab6_kit/";
 
 	// Clock divider 100 MHz -> 25 MHz
 	wire clk25; // 25MHz clock
@@ -35,6 +35,62 @@ module VGAController(
 	wire[9:0] x;
 	wire[8:0] y;
 	
+	reg[9:0] box_x;
+	reg[8:0] box_y;
+	
+	initial begin
+	   box_x = 100;
+	   box_y = 100;
+	end
+	
+	integer box_size = 50;
+	
+	always @(posedge clk) begin
+	   if(screenEnd) begin
+           if(BTNR && box_x + box_size   < VIDEO_WIDTH ) box_x = box_x + 1;
+           if(BTNU && box_y > 0) box_y = box_y - 1;
+           if(BTNL && box_x > 0) box_x = box_x - 1;
+           if(BTND && box_y + box_size  < VIDEO_HEIGHT ) box_y = box_y + 1;
+       end
+	end
+	
+	wire read_data;
+	wire[7:0] rx_data;
+	
+	Ps2Interface ps(.ps2_clk(ps2_clk ), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
+	
+	wire[6:0] ascii_code;
+	
+    RAM # (		
+        .DEPTH(36),  //0-9 + letters in alphabet
+        .DATA_WIDTH(7), //bits in ascii code
+        .ADDRESS_WIDTH(8),  //bits in ScanCode
+        .MEMFILE({FILES_PATH, "ascii.mem"}))
+    ascii(
+        .clk(clk), 							   	   // Rising edge of the 100 MHz clk
+        .addr(rx_data ),					       
+        .dataOut(ascii_code),				       
+        .wEn(1'b0));
+        
+   wire[2500] sprite;
+    
+    RAM # (		
+        .DEPTH(94),  
+        .DATA_WIDTH(2500), //box bits
+        .ADDRESS_WIDTH(7),  //bits in ascii code
+        .MEMFILE({FILES_PATH, "spites.mem"}))
+    sprite(
+        .clk(clk), 							   	   // Rising edge of the 100 MHz clk
+        .addr(ascii_code ),					       
+        .dataOut(sprite),				       
+        .wEn(1'b0));
+	
+	always @(posedge clk) begin
+	   if(read_data) begin
+	       
+	   end
+	end
+	
 	VGATimingGenerator #(
 		.HEIGHT(VIDEO_HEIGHT), // Use the standard VGA Values
 		.WIDTH(VIDEO_WIDTH))
@@ -51,10 +107,7 @@ module VGAController(
 	// Image Data to Map Pixel Location to Color Address
 	localparam 
 		PIXEL_COUNT = VIDEO_WIDTH*VIDEO_HEIGHT, 	             // Number of pixels on the screen
-		SPRITE_COUNT = 94, 
-		SPRITE_ADDRESS_WIDTH = $clog2(SPRITE_COUNT*2500) + 1,
 		PIXEL_ADDRESS_WIDTH = $clog2(PIXEL_COUNT) + 1,           // Use built in log2 command
-		ASCII_ADDRESS_WIDTH = $clog2(256) + 1, 
 		BITS_PER_COLOR = 12, 	  								 // Nexys A7 uses 12 bits/color
 		PALETTE_COLOR_COUNT = 256, 								 // Number of Colors available
 		PALETTE_ADDRESS_WIDTH = $clog2(PALETTE_COLOR_COUNT) + 1; // Use built in log2 Command
@@ -62,8 +115,6 @@ module VGAController(
 	wire[PIXEL_ADDRESS_WIDTH-1:0] imgAddress;  	 // Image address for the image data
 	wire[PALETTE_ADDRESS_WIDTH-1:0] colorAddr; 	 // Color address for the color palette
 	assign imgAddress = x + 640*y;				 // Address calculated coordinate
-
-	
 
 	RAM #(		
 		.DEPTH(PIXEL_COUNT), 				     // Set RAM depth to contain every pixel
@@ -77,7 +128,7 @@ module VGAController(
 		.wEn(1'b0)); 						 // We're always reading
 
 	// Color Palette to Map Color Address to 12-Bit Color
-	wire[BITS_PER_COLOR-1:0] colorData; // 12-bit color data at current pixel
+	wire[BITS_PER_COLOR-1:0] colorData, colorDataBox; // 12-bit color data at current pixel
 
 	RAM #(
 		.DEPTH(PALETTE_COLOR_COUNT), 		       // Set depth to contain every color		
@@ -89,88 +140,18 @@ module VGAController(
 		.addr(colorAddr),					       // Address from the ImageData RAM
 		.dataOut(colorData),				       // Color at current pixel
 		.wEn(1'b0)); 						       // We're always reading
-
-	RAM #(
-		.DEPTH(SPRITE_COUNT * 2500), 		       		
-		.DATA_WIDTH(1'b1), 		      
-		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
-		.MEMFILE({FILES_PATH, "sprites.mem"}))  
-	SpriteData(
-		.clk(clk), 							   	   
-		.addr(square_Address),					     
-		.dataOut(square_colorAddr),				       
-		.wEn(1'b0)); 		
-
-	RAM #(
-		.DEPTH(256), 		       		
-		.DATA_WIDTH(8), 		      
-		.ADDRESS_WIDTH(8),    
-		.MEMFILE({FILES_PATH, "ascii.mem"}))  
-	ASCIIData(
-		.clk(clk), 							   	   
-		.addr(reg_rx_data),					     
-		.dataOut(ascii_Addr),				       
-		.wEn(1'b0)); 					      
-
-
-	 wire[7:0] rx_data;
-	 reg[7:0] reg_rx_data;
-	 wire read_data;
-	 PS2Interface ps2module(.ps2_clk(ps2_clk), .ps2_data(ps2_data), .clk(clk), .rst(reset), .tx_data(8'b0), .write_data(1'b0), .rx_data(rx_data), .read_data(read_data), .busy(1'b0), .err(1'b0));
-
-	always @(posedge clk) begin
-		if (read_data==1) begin
-			reg_rx_data = rx_data;
-		end
-	end
-
-	wire [9:0] sprite_x;
-	wire [8:0] sprite_y;
-	wire[SPRITE_ADDRESS_WIDTH-1:0] square_Address;  	
-	wire square_colorAddr; 	
-	wire [7:0] ascii_Addr; 	
-	assign square_Address = sprite_x + 50*sprite_y + (ascii_Addr-33)*2500;	
+	
+	
+	wire inBox;
+	assign inBox = (((x >= box_x) && (x < box_x + box_size)) && ((y >= box_y) && (y < box_y + box_size))) ? 1 : 0;
+	
+	integer box_color = 2;
+	assign colorDataBox = inBox ? box_color : colorData; 
 
 	// Assign to output color from register if active
-	reg [9:0] ref_x;
-	reg [8:0] ref_y;
-	initial begin
-		ref_x = 320;
-		ref_y = 240;
-	end
-	assign sprite_x = x - ref_x;
-	assign sprite_y = y - ref_y;
-	wire [9:0] x_boundary;
-	assign x_boundary = ref_x + 50;
-	wire [8:0] y_boundary;
-	assign y_boundary = ref_y + 50;
-	wire in_square, sprite_bit;
-	assign in_square = (x >= ref_x && x < x_boundary && y >= ref_y && y < y_boundary);
-	assign sprite_bit = (in_square && square_colorAddr);
-	wire [BITS_PER_COLOR-1:0] colorData_real;
-	assign colorData_real =  sprite_bit ? 12'h000 : colorData;
 	wire[BITS_PER_COLOR-1:0] colorOut; 			  // Output color 
-	assign colorOut = /*active ?*/ colorData_real /*: 12'd0*/; // When not active, output black 
+	assign colorOut = active ? colorDataBox : 12'd0; // When not active, output black
+
 	// Quickly assign the output colors to their channels using concatenation
 	assign {VGA_R, VGA_G, VGA_B} = colorOut;
-
-	
-
-	always @(posedge clk) begin
-		if(screenEnd) begin
-			if(BTNU && ref_y > 0) begin
-				ref_y = ref_y - 1;
-			end
-			if(BTND && ref_y < 480) begin
-				ref_y = ref_y + 1;
-			end
-			if(BTNR && ref_x > 0) begin
-				ref_x = ref_x + 1;
-			end
-			if(BTNL && ref_x < 640) begin
-				ref_x = ref_x - 1;
-			end
-		end
-	end
-
 endmodule
