@@ -24,14 +24,32 @@
  *
  **/
 
-module Wrapper (clock, reset);
-	input clock, reset;
+module Wrapper (clk_100mhz, reset, BTNU, BTNR, BTND, BTNL);
+	input clk_100mhz, reset, BTNU, BTNR, BTND, BTNL;
+
+	wire clock;
+	assign clock = clk_29;
+	
+	 clk_wiz_0 pll(
+	      // Clock out ports
+	      .clk_out1(clk_29),
+	      // Status and control signals
+	      .reset(1'b0),
+	      .locked(locked),
+	     // Clock in ports
+	      .clk_in1(clk_100mhz)
+	    );
+	    
+	    wire [2:0] button;
+	    
+	    buttons b(.BTNU(BTNU), .BTNR(BTNR), .BTND(BTND), .BTNL(BTNL), .clk(clock), .button(button));
+
 
 	wire rwe, mwe;
 	wire[4:0] rd, rs1, rs2;
 	wire[31:0] instAddr, instData, 
 		rData, regA, regB,
-		memAddr, memDataIn, memDataOut;
+		memAddr, memDataIn, memDataOut, dmemDataOut;
 
 
 	// ADD YOUR MEMORY FILE HERE
@@ -70,6 +88,14 @@ module Wrapper (clock, reset);
 		.wEn(mwe), 
 		.addr(memAddr[11:0]), 
 		.dataIn(memDataIn), 
-		.dataOut(memDataOut));
+		.dataOut(dmemDataOut));
+
+	always @(posedge clock) begin	
+	        if(memAddr[11:0] == 0) begin
+	           assign memDataOut = button;
+	        end else begin
+	           assign memDataOut = dmemDataOut;
+	        end
+	 end
 
 endmodule
