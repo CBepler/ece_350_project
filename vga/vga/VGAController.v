@@ -15,7 +15,7 @@ module VGAController(
 	inout ps2_data);
 	
 	// Lab Memory Files Location
-	localparam FILES_PATH = "/Users/rc345/Downloads/vga/";
+	localparam FILES_PATH = "c:\Users\cgb45\Downloads\ece_350_project-main\ece_350_project-main\vga";
 
 	// Clock divider 100 MHz -> 25 MHz
 	wire clk25; // 25MHz clock
