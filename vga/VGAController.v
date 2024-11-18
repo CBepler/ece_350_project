@@ -15,6 +15,12 @@ module VGAController(
 	output[3:0] VGA_B,  // Blue Signal Bits
 	inout ps2_clk,
 	inout ps2_data);
+
+	////// Imitialize array for snake location
+	/* wire [31:0] head_x, head_y;
+	assign head_x = x_values[31:0];
+	assign head_y = y_values[31:0]; */
+	// x_values[63:32];
 	
 	// Lab Memory Files Location
 	localparam FILES_PATH = "/Users/rc345/Downloads/vga/";
@@ -41,10 +47,14 @@ module VGAController(
 	wire[31:0] map_width_min, map_width_max;
 	wire[31:0] map_height_min, map_height_max; 
 	assign map_width_min = 50;
-	assign map_width_max = 480;
+	assign map_width_max = 449;
 	assign map_height_min = 50;
-	assign map_height_max = 480;
+	assign map_height_max = 441;
 
+/*
+	wire [31:0] location; 
+	assign location = ;
+*/
 	////////////////////////////////
 	reg[31:0] box_x;
 	reg[31:0] box_y;
@@ -54,7 +64,7 @@ module VGAController(
 	   box_y = 100;
 	end
 	
-	integer box_size = 35;
+	integer box_size = 40;
 	
 	always @(posedge clk) begin
 	   if(screenEnd) begin
