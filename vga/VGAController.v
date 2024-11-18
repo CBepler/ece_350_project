@@ -2,9 +2,12 @@
 module VGAController(     
 	input clk, 			// 100 MHz System Clock
 	input reset, 		// Reset Signal
-	input [31:0] x_values,
-	input [31:0] y_values,
-	input game_done,
+	input [3199:0] x_values,
+	input [3199:0] y_values,
+	input BTNU,
+	input BTNR,
+	input BTND,
+	input BTNL,
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
 	output[3:0] VGA_R,  // Red Signal Bits
@@ -14,7 +17,7 @@ module VGAController(
 	inout ps2_data);
 	
 	// Lab Memory Files Location
-	localparam FILES_PATH = "c:\Users\cgb45\Downloads\ece_350_project-main\ece_350_project-main\vga";
+	localparam FILES_PATH = "/Users/rc345/Downloads/vga/";
 
 	// Clock divider 100 MHz -> 25 MHz
 	wire clk25; // 25MHz clock
@@ -33,7 +36,16 @@ module VGAController(
 	wire active, screenEnd;
 	wire[31:0] x;
 	wire[31:0] y;
-	
+
+	//initialize map borders
+	wire[31:0] map_width_min, map_width_max;
+	wire[31:0] map_height_min, map_height_max; 
+	assign map_width_min = 50;
+	assign map_width_max = 480;
+	assign map_height_min = 50;
+	assign map_height_max = 480;
+
+	////////////////////////////////
 	reg[31:0] box_x;
 	reg[31:0] box_y;
 	
@@ -42,14 +54,14 @@ module VGAController(
 	   box_y = 100;
 	end
 	
-	integer box_size = 50;
+	integer box_size = 35;
 	
 	always @(posedge clk) begin
 	   if(screenEnd) begin
-           if(BTNR && box_x + box_size   < VIDEO_WIDTH ) box_x = box_x + 1;
-           if(BTNU && box_y > 0) box_y = box_y - 1;
-           if(BTNL && box_x > 0) box_x = box_x - 1;
-           if(BTND && box_y + box_size  < VIDEO_HEIGHT ) box_y = box_y + 1;
+           if(BTNR && box_x + box_size < map_width_max) box_x = box_x + 1;
+           if(BTNU && box_y > map_height_min) box_y = box_y - 1;
+           if(BTNL && box_x > map_width_min) box_x = box_x - 1;
+           if(BTND && box_y + box_size < map_height_max) box_y = box_y + 1;
        end
 	end
 	
@@ -86,11 +98,6 @@ module VGAController(
         .wEn(1'b0));
 	*/
 	
-	always @(posedge clk) begin
-	   if(read_data) begin
-	       
-	   end
-	end
 	
 	VGATimingGenerator #(
 		.HEIGHT(VIDEO_HEIGHT), // Use the standard VGA Values
@@ -146,7 +153,7 @@ module VGAController(
 	wire inBox;
 	assign inBox = (((x >= box_x) && (x < box_x + box_size)) && ((y >= box_y) && (y < box_y + box_size))) ? 1 : 0;
 	
-	integer box_color = 2;
+	integer box_color = 8;
 	assign colorDataBox = inBox ? box_color : colorData; 
 
 	// Assign to output color from register if active
@@ -155,4 +162,5 @@ module VGAController(
 
 	// Quickly assign the output colors to their channels using concatenation
 	assign {VGA_R, VGA_G, VGA_B} = colorOut;
+
 endmodule
