@@ -1,9 +1,14 @@
 #memory address 0 is buttons
+# 1 is game done
+# 100 - 199 is local x
+# 200 -299 is local y
+# 300 - 399 is vga x
+# 400 - 499 is vga y
 
 sw $r0, 100($r0)  #100 is local x of box
-sw $r0, 101($r0)  #101 is local y of box
+sw $r0, 200($r0)  #200 is local y of box
 
-sw $r0, 3($r0) #zero out game_done
+sw $r0, 1($r0) #zero out game_done
 
 start_loop:
 lw $r1, 0($r0)  #load in buttons value
@@ -38,11 +43,11 @@ button_done:
 
 #local store back
 sw $r2, 100($r0)
-sw $r3, 101($r0)
+sw $r3, 200($r0)
 
 #VGA store back
-sw $r2, 1($r0)
-sw $r3, 2($r0)
+sw $r2, 300($r0)
+sw $r3, 400($r0)
 
 
 addi $r4, $r0, 10 #check if out of bounds
@@ -52,9 +57,13 @@ blt $r0, $r3, not_done #branch if 0 < x  ie  x > 0
 blt $r3, $r4, not_done #branch if y < 10
 
 addi $r4, $r0, 1
-sw $r4, 3($r0)
+sw $r4, 1($r0)
+j game_done
 
 not_done:
 
 j start_loop
+
+
+game_done:
 

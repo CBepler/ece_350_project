@@ -24,9 +24,20 @@
  *
  **/
 
-module Wrapper (clk_100mhz, reset, BTNU, BTNR, BTND, BTNL, LED);
-	input clk_100mhz, reset, BTNU, BTNR, BTND, BTNL;
-	output [15:0] LED;
+module Wrapper (input clk_100mhz,
+ 				input reset,
+				input BTNU,
+				input BTNR,
+				input BTND,
+				input BTNL,
+				output [15:0] LED
+				output hSync, 		// H Sync Signal
+				output vSync, 		// Veritcal Sync Signal
+				output[3:0] VGA_R,  // Red Signal Bits
+				output[3:0] VGA_G,  // Green Signal Bits
+				output[3:0] VGA_B,  // Blue Signal Bits
+				inout ps2_clk,
+				inout ps2_data);
 
 	wire clock;
 	assign clock = clk_29;
@@ -94,15 +105,48 @@ module Wrapper (clk_100mhz, reset, BTNU, BTNR, BTND, BTNL, LED);
 
 	 assign memDataOut = (memAddr[11:0] == 0) ? button : dmemDataOut; 
 
-	 //VGAController control();
+	 //wire [3199:0] x_values, y_values;
+	 reg [3199:0] x_values_reg, y_values_reg;
+	 wire [3199:0] x_values, y_values;
+	
+	assign x_values = x_values_reg;
+	assign y_values = y_values_reg;
 
-	 wire [31:0] led_bits;
-	 assign led_bits = memDataIn;
+	always @(posedge clk_29) begin
+		if(memAddr[11:0] >= 300 && memAddr[11:0] <= 399) begin
+			integer idx = (memAddr[11:0] - 300) * 32;
+			x_values_reg[idx+31:idx] = memDataIn;
+		end
 
-	 wire led_we;
-	 assign led_we = (mwe && memAddr[11:0] == 1) ? 1'b1 : 1'b0;
+		if(memAddr[11:0] >= 400 && memAddr[11:0] <= 499) begin
+			integer idx = (memAddr[11:0] - 400) * 32;
+			y_values_reg[idx+31:idx] = memDataIn;
+		end
+	end
 
 
-	 led light(.leds(led_bits), .LED(LED), .clk(clk_29), .led_we(led_we));
+	 reg game_done_reg [31:0];
+	 wire game_done [31:0];
+
+	always @(posedge clk_29) begin
+		if(game_done_reg != 1) begin
+			game_done_reg = (mwe && memAddr[11:0] == 1) ? memDataIn : 1'b0;
+		end
+	end
+
+	assign game_done = game_done_reg;
+
+
+
+	 VGAController control(.clk(clk_100mhz), .reset(reset), .x_values(x_values), .y_values(y_values), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
+
+	//  wire [31:0] led_bits;
+	//  assign led_bits = memDataIn;
+
+	//  wire led_we;
+	//  assign led_we = (mwe && memAddr[11:0] == 1) ? 1'b1 : 1'b0;
+
+
+	//  led light(.leds(led_bits), .LED(LED), .clk(clk_29), .led_we(led_we));
 
 endmodule

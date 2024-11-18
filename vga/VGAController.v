@@ -2,10 +2,9 @@
 module VGAController(     
 	input clk, 			// 100 MHz System Clock
 	input reset, 		// Reset Signal
-	input BTNU,
-	input BTNR,
-	input BTND,
-	input BTNL,
+	input [31:0] x_values,
+	input [31:0] y_values,
+	input game_done,
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
 	output[3:0] VGA_R,  // Red Signal Bits
