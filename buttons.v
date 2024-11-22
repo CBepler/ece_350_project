@@ -39,7 +39,7 @@ module buttons(
         else if(BTND) begin
             button_reg <= 3;
         end
-        else if(BTNl) begin
+        else if(BTNL) begin
             button_reg <= 4;
         end
         else begin
