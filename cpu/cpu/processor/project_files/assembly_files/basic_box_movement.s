@@ -19,7 +19,7 @@ sw $r0, 2($r0) #zero out previous button state
 start_loop:
 lw $r1, 0($r0)  #load in buttons value
 lw $r2, 100($r0) #load local x
-lw $r3, 101($r0) #load local y
+lw $r3, 200($r0) #load local y
 lw $r5, 2($r0) #previous button state
 addi $r4, $r0, 1 #button checker
 
