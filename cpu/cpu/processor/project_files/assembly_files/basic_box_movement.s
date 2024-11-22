@@ -12,7 +12,7 @@
 sw $r0, 100($r0)  #100 is local x of box
 sw $r0, 200($r0)  #200 is local y of box
 
-sw $r0, 1($r0) #zero out game_done
+#sw $r0, 1($r0) #zero out game_done
 sw $r0, 2($r0) #zero out previous button state
 
 
@@ -67,14 +67,17 @@ blt $r2, $r4, not_done #branch if x < 10
 blt $r0, $r3, not_done #branch if 0 < x  ie  x > 0
 blt $r3, $r4, not_done #branch if y < 10
 
-addi $r4, $r0, 1
-sw $r4, 1($r0)
-j game_done
+#addi $r4, $r0, 1
+#sw $r4, 1($r0)
+#j game_done
+
+sw $r0 100($r0)
+sw $r0 200($r0)
+sw $r0 300($r0)
+sw $r0 400($r0)
 
 not_done:
 
 j start_loop
 
-
-game_done:
-
+#game_done:
