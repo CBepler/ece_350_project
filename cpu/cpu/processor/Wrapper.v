@@ -65,7 +65,7 @@ module Wrapper (input clk_100mhz,
 
 
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "";
+	localparam INSTR_FILE = "basic_box_movement";
 	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
@@ -105,31 +105,31 @@ module Wrapper (input clk_100mhz,
 
 	 assign memDataOut = (memAddr[11:0] == 0) ? button : dmemDataOut; 
 
-	 //wire [3199:0] x_values, y_values;
-	 reg [3199:0] x_values_reg, y_values_reg;
-	 wire [3199:0] x_values, y_values;
+	 reg [31:0] x_values_reg, y_values_reg;
+	 wire [31:0] x_values, y_values;
 	
 	assign x_values = x_values_reg;
 	assign y_values = y_values_reg;
 
 	always @(posedge clk_29) begin
-		if(memAddr[11:0] >= 300 && memAddr[11:0] <= 399) begin
-			integer idx = (memAddr[11:0] - 300) * 32;
-			x_values_reg[idx+31:idx] = memDataIn;
+		if(memAddr[11:0] == 300 && mwe) begin
+			x_values_reg = memDataIn;
 		end
 
-		if(memAddr[11:0] >= 400 && memAddr[11:0] <= 499) begin
-			integer idx = (memAddr[11:0] - 400) * 32;
-			y_values_reg[idx+31:idx] = memDataIn;
+		if(memAddr[11:0] == 400 && mwe) begin
+			y_values_reg = memDataIn;
 		end
 	end
+	
+	
+	
 
 
-	 reg game_done_reg [31:0];
-	 wire game_done [31:0];
+	 reg [31:0] game_done_reg;
+	 wire [31:0] game_done;
 
 	always @(posedge clk_29) begin
-		if(game_done_reg != 1) begin
+		if(game_done_reg != 32'd1) begin
 			game_done_reg = (mwe && memAddr[11:0] == 1) ? memDataIn : 1'b0;
 		end
 	end
