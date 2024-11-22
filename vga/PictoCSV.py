@@ -18,7 +18,7 @@ if len(sys.argv) != 2:
     sys.exit()
 
 imageName = sys.argv[1]
-path = "/Users/raquel/Desktop/vga"
+path = "/Users/raquel/Desktop/vga/"
 
 file = Image.open(imageName)
 

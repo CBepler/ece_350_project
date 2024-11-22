@@ -2,9 +2,8 @@
 module VGAController(     
 	input clk, 			// 100 MHz System Clock
 	input reset, 		// Reset Signal
-	input [31:0] x_values,
-	input [31:0] y_values,
-	input game_done,
+	input [3199:0] x_values, 	//these values are the array that will hold the individual parts of the snake 
+	input [3199:0] y_values,	//we will only be changing the size of the head
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
 	output[3:0] VGA_R,  // Red Signal Bits
@@ -12,9 +11,10 @@ module VGAController(
 	output[3:0] VGA_B,  // Blue Signal Bits
 	inout ps2_clk,
 	inout ps2_data);
-	
+
+
 	// Lab Memory Files Location
-	localparam FILES_PATH = "c:\Users\cgb45\Downloads\ece_350_project-main\ece_350_project-main\vga";
+	localparam FILES_PATH = "/Users/rc345/Downloads/vga/";
 
 	// Clock divider 100 MHz -> 25 MHz
 	wire clk25; // 25MHz clock
@@ -33,64 +33,34 @@ module VGAController(
 	wire active, screenEnd;
 	wire[31:0] x;
 	wire[31:0] y;
-	
-	reg[31:0] box_x;
-	reg[31:0] box_y;
-	
-	initial begin
-	   box_x = 100;
-	   box_y = 100;
-	end
-	
-	integer box_size = 50;
-	
+
+	//initialize map borders
+	wire[31:0] map_width_min, map_width_max;
+	wire[31:0] map_height_min, map_height_max; 
+	assign map_width_min = 48;
+	assign map_width_max = 449;
+	assign map_height_min = 48;
+	assign map_height_max = 441;
+
+
+	integer board_x_start = 48;
+	integer board_y_start = 48;
+	integer tile_size = 48;
+
+	////// Imitialize array for snake location
+	reg [31:0]snake_pos_pixel_x, snake_pos_pixel_y; 
 	always @(posedge clk) begin
-	   if(screenEnd) begin
-           if(BTNR && box_x + box_size   < VIDEO_WIDTH ) box_x = box_x + 1;
-           if(BTNU && box_y > 0) box_y = box_y - 1;
-           if(BTNL && box_x > 0) box_x = box_x - 1;
-           if(BTND && box_y + box_size  < VIDEO_HEIGHT ) box_y = box_y + 1;
-       end
+		snake_pos_pixel_x = board_x_start + x_values[31:0] * tile_size; 
+		snake_pos_pixel_y = board_y_start + y_values[31:0] * tile_size;
 	end
 	
+	integer box_size = 40; 	//tile size
+
 	wire read_data;
 	wire[7:0] rx_data;
 	
 	Ps2Interface ps(.ps2_clk(ps2_clk), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
 	
-	/*
-	wire[6:0] ascii_code;
-
-    RAM # (		
-        .DEPTH(36),  //0-9 + letters in alphabet
-        .DATA_WIDTH(7), //bits in ascii code
-        .ADDRESS_WIDTH(8),  //bits in ScanCode
-        .MEMFILE({FILES_PATH, "ascii.mem"}))
-    ascii(
-        .clk(clk), 							   	   // Rising edge of the 100 MHz clk
-        .addr(rx_data ),					       
-        .dataOut(ascii_code),				       
-        .wEn(1'b0));
-        
-    wire[2500:0] sprite;
-    
-    RAM # (		
-        .DEPTH(94),  
-        .DATA_WIDTH(2500), //box bits
-        .ADDRESS_WIDTH(7),  //bits in ascii code
-        .MEMFILE({FILES_PATH, "spites.mem"}))
-    sprite(
-        .clk(clk), 							   	   // Rising edge of the 100 MHz clk
-        .addr(ascii_code ),					       
-        .dataOut(sprite),				       
-        .wEn(1'b0));
-	*/
-	
-	always @(posedge clk) begin
-	   if(read_data) begin
-	       
-	   end
-	end
 	
 	VGATimingGenerator #(
 		.HEIGHT(VIDEO_HEIGHT), // Use the standard VGA Values
@@ -142,11 +112,11 @@ module VGAController(
 		.dataOut(colorData),				       // Color at current pixel
 		.wEn(1'b0)); 						       // We're always reading
 	
-	
+	//assign color to green box 
 	wire inBox;
-	assign inBox = (((x >= box_x) && (x < box_x + box_size)) && ((y >= box_y) && (y < box_y + box_size))) ? 1 : 0;
+	assign inBox = (((x >= snake_pos_pixel_x) && (x < snake_pos_pixel_x + box_size)) && ((y >= snake_pos_pixel_y) && (y < snake_pos_pixel_y + box_size))) ? 1 : 0;
 	
-	integer box_color = 2;
+	integer box_color = 12'd8;
 	assign colorDataBox = inBox ? box_color : colorData; 
 
 	// Assign to output color from register if active
@@ -155,4 +125,5 @@ module VGAController(
 
 	// Quickly assign the output colors to their channels using concatenation
 	assign {VGA_R, VGA_G, VGA_B} = colorOut;
+
 endmodule
