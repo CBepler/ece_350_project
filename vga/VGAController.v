@@ -4,6 +4,7 @@ module VGAController(
 	input reset, 		// Reset Signal
 	input [3199:0] x_values, 	//these values are the array that will hold the individual parts of the snake 
 	input [3199:0] y_values,	//we will only be changing the size of the head
+	input game_done,
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
 	output[3:0] VGA_R,  // Red Signal Bits
