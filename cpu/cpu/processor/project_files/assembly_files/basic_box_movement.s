@@ -50,15 +50,7 @@ not_left:
 
 button_done:
 
-sw $r1 2($r0)
-
-#local store back
-sw $r2, 100($r0)
-sw $r3, 200($r0)
-
-#VGA store back
-sw $r2, 300($r0)
-sw $r3, 400($r0)
+sw $r1 2($r0)  #store back previous button
 
 
 addi $r4, $r0, 10 #check if out of bounds
@@ -71,12 +63,18 @@ blt $r3, $r4, not_done #branch if y < 10
 #sw $r4, 1($r0)
 #j game_done
 
-sw $r0 100($r0)
-sw $r0 200($r0)
-sw $r0 300($r0)
-sw $r0 400($r0)
+addi $r2, $r0, 0
+addi $r3, $r0, 0
 
 not_done:
+
+#local store back
+sw $r2, 100($r0)
+sw $r3, 200($r0)
+
+#VGA store back
+sw $r2, 300($r0)
+sw $r3, 400($r0)
 
 j start_loop
 
