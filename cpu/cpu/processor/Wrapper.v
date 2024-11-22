@@ -25,7 +25,6 @@
  **/
 
 module Wrapper (input clk_100mhz,
- 				input reset,
 				input BTNU,
 				input BTNR,
 				input BTND,
@@ -38,13 +37,16 @@ module Wrapper (input clk_100mhz,
 				output[3:0] VGA_B,  // Blue Signal Bits
 				inout ps2_clk,
 				inout ps2_data);
+	
+	wire reset;
+	assign reset = 1'b0;
 
-	wire clock;
-	assign clock = clk_29;
+	wire clock, clk_25;
+	assign clock = clk_25;
 	
 	 clk_wiz_0 pll(
 	      // Clock out ports
-	      .clk_out1(clk_29),
+	      .clk_out1(clk_25),
 	      // Status and control signals
 	      .reset(1'b0),
 	      .locked(locked),
@@ -111,7 +113,7 @@ module Wrapper (input clk_100mhz,
 	assign x_values = x_values_reg;
 	assign y_values = y_values_reg;
 
-	always @(posedge clk_29) begin
+	always @(posedge clk_25) begin
 		if(memAddr[11:0] == 300 && mwe) begin
 			x_values_reg = memDataIn;
 		end
@@ -128,7 +130,7 @@ module Wrapper (input clk_100mhz,
 	 reg [31:0] game_done_reg;
 	 wire [31:0] game_done;
 
-	always @(posedge clk_29) begin
+	always @(posedge clk_25) begin
 		if(game_done_reg != 32'd1) begin
 			game_done_reg = (mwe && memAddr[11:0] == 1) ? memDataIn : 1'b0;
 		end
@@ -138,7 +140,7 @@ module Wrapper (input clk_100mhz,
 
 
 
-	 VGAController control(.clk(clk_100mhz), .reset(reset), .x_values(x_values), .y_values(y_values), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
+	 VGAController control(.clk(clk_100mhz), .clk25(clk_25), .reset(reset), .x_values(x_values), .y_values(y_values), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
 
 	//  wire [31:0] led_bits;
 	//  assign led_bits = memDataIn;
