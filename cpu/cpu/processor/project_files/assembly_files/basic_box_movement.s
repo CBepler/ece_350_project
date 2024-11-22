@@ -54,19 +54,16 @@ sw $r1 2($r0)  #store back previous button
 
 
 addi $r4, $r0, 10 #check if out of bounds
-blt $r0, $r2, not_done #branch if 0 < x  ie  x > 0
-blt $r2, $r4, not_done #branch if x < 10
-blt $r0, $r3, not_done #branch if 0 < x  ie  x > 0
-blt $r3, $r4, not_done #branch if y < 10
+blt $r2, $r0, done #branch if 0 > x
+blt $r4, $r2, done #branch if x > 10
+blt $r3, $r0, done #branch if 0 > y
+blt $r4, $r3, done #branch if y > 10
 
 #addi $r4, $r0, 1
 #sw $r4, 1($r0)
 #j game_done
 
-addi $r2, $r0, 0
-addi $r3, $r0, 0
-
-not_done:
+update:
 
 #local store back
 sw $r2, 100($r0)
@@ -79,3 +76,8 @@ sw $r3, 400($r0)
 j start_loop
 
 #game_done:
+
+done:
+addi $r2, $r0, 0
+addi $r3, $r0, 0
+j update
