@@ -52,10 +52,17 @@ module VGAController(
 
 	////// Imitialize array for snake location
 	reg [31:0]snake_pos_pixel_x, snake_pos_pixel_y; 
-	always @(posedge clk25) begin
-		snake_pos_pixel_x = board_x_start + x_values[31:0] * tile_size; 
+	always @(posedge clk) begin
+		snake_pos_pixel_x = board_x_start + x_values[31:0] * tile_size;
 		snake_pos_pixel_y = board_y_start + y_values[31:0] * tile_size;
+		
+		if(snake_pos_pixel_x > map_width_max & snake_pos_pixel_x < map_width_min)
+			snake_pos_pixel_x = board_x_start; 
+		if(snake_pos_pixel_y > map_height_max & snake_pos_pixel_y < map_width_min)
+			snake_pos_pixel_y = board_y_start; 
+		
 	end
+
 	
 	integer box_size = 40; 	//tile size
 
