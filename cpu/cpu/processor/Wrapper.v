@@ -30,7 +30,7 @@ module Wrapper (input clk_100mhz,
 				input BTNR,
 				input BTND,
 				input BTNL,
-				output [15:0] LED
+				output [15:0] LED,
 				output hSync, 		// H Sync Signal
 				output vSync, 		// Veritcal Sync Signal
 				output[3:0] VGA_R,  // Red Signal Bits
