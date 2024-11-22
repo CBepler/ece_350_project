@@ -27,7 +27,7 @@ module RAM #( parameter DATA_WIDTH = 32, ADDRESS_WIDTH = 12, DEPTH = 4096) (
     end
 endmodule
 
-module RAM_v #( parameter DATA_WIDTH = 8, ADDRESS_WIDTH = 8, DEPTH = 256, MEMFILE = "") (
+module RAM_VGA #( parameter DATA_WIDTH = 8, ADDRESS_WIDTH = 8, DEPTH = 256, MEMFILE = "") (
     input wire                     clk,
     input wire                     wEn,
     input wire [ADDRESS_WIDTH-1:0] addr,
