@@ -53,7 +53,7 @@ button_done:
 sw $r1 2($r0)  #store back previous button
 
 
-addi $r4, $r0, 10 #check if out of bounds
+addi $r4, $r0, 9 #check if out of bounds
 blt $r2, $r0, done #branch if 0 > x
 blt $r4, $r2, done #branch if x > 10
 blt $r3, $r0, done #branch if 0 > y
