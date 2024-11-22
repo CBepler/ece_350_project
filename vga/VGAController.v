@@ -1,6 +1,7 @@
 `timescale 1 ns/ 100 ps
-module VGAController(     
-	input clk, 			// 100 MHz System Clock
+module VGAController(    
+    input clk, 
+	input clk25, 			// 100 MHz System Clock
 	input reset, 		// Reset Signal
 	input [3199:0] x_values, 	//these values are the array that will hold the individual parts of the snake 
 	input [3199:0] y_values,	//we will only be changing the size of the head
@@ -15,16 +16,16 @@ module VGAController(
 
 
 	// Lab Memory Files Location
-	localparam FILES_PATH = "/Users/rc345/Downloads/vga/";
+	localparam FILES_PATH = "C:/Users/cgb45/Downloads/ece_350_project-main/ece_350_project-main/vga/";
 
 	// Clock divider 100 MHz -> 25 MHz
-	wire clk25; // 25MHz clock
+//	wire clk25; // 25MHz clock
 
-	reg[1:0] pixCounter = 0;      // Pixel counter to divide the clock
-    assign clk25 = pixCounter[1]; // Set the clock high whenever the second bit (2) is high
-	always @(posedge clk) begin
-		pixCounter <= pixCounter + 1; // Since the reg is only 3 bits, it will reset every 8 cycles
-	end
+//	reg[1:0] pixCounter = 0;      // Pixel counter to divide the clock
+//    assign clk25 = pixCounter[1]; // Set the clock high whenever the second bit (2) is high
+//	always @(posedge clk) begin
+//		pixCounter <= pixCounter + 1; // Since the reg is only 3 bits, it will reset every 8 cycles
+//	end
 
 	// VGA Timing Generation for a Standard VGA Screen
 	localparam 
@@ -46,11 +47,12 @@ module VGAController(
 
 	integer board_x_start = 48;
 	integer board_y_start = 48;
-	integer tile_size = 48;
+	integer tile_size = 40;
+	
 
 	////// Imitialize array for snake location
 	reg [31:0]snake_pos_pixel_x, snake_pos_pixel_y; 
-	always @(posedge clk) begin
+	always @(posedge clk25) begin
 		snake_pos_pixel_x = board_x_start + x_values[31:0] * tile_size; 
 		snake_pos_pixel_y = board_y_start + y_values[31:0] * tile_size;
 	end
@@ -88,13 +90,13 @@ module VGAController(
 	wire[PALETTE_ADDRESS_WIDTH-1:0] colorAddr; 	 // Color address for the color palette
 	assign imgAddress = x + 640*y;				 // Address calculated coordinate
 
-	RAM_v #(		
+	RAM_VGA #(		
 		.DEPTH(PIXEL_COUNT), 				     // Set RAM depth to contain every pixel
 		.DATA_WIDTH(PALETTE_ADDRESS_WIDTH),      // Set data width according to the color palette
 		.ADDRESS_WIDTH(PIXEL_ADDRESS_WIDTH),     // Set address with according to the pixel count
 		.MEMFILE({FILES_PATH, "image.mem"})) // Memory initialization
 	ImageData(
-		.clk(clk), 						 // Falling edge of the 100 MHz clk
+		.clk(clk25), 						 // Falling edge of the 100 MHz clk
 		.addr(imgAddress),					 // Image data address
 		.dataOut(colorAddr),				 // Color palette address
 		.wEn(1'b0)); 						 // We're always reading
@@ -102,13 +104,13 @@ module VGAController(
 	// Color Palette to Map Color Address to 12-Bit Color
 	wire[BITS_PER_COLOR-1:0] colorData, colorDataBox; // 12-bit color data at current pixel
 
-	RAM_v #(
+	RAM_VGA #(
 		.DEPTH(PALETTE_COLOR_COUNT), 		       // Set depth to contain every color		
 		.DATA_WIDTH(BITS_PER_COLOR), 		       // Set data width according to the bits per color
 		.ADDRESS_WIDTH(PALETTE_ADDRESS_WIDTH),     // Set address width according to the color count
 		.MEMFILE({FILES_PATH, "colors.mem"}))  // Memory initialization
 	ColorPalette(
-		.clk(clk), 							   	   // Rising edge of the 100 MHz clk
+		.clk(clk25), 							   	   // Rising edge of the 100 MHz clk
 		.addr(colorAddr),					       // Address from the ImageData RAM
 		.dataOut(colorData),				       // Color at current pixel
 		.wEn(1'b0)); 						       // We're always reading
