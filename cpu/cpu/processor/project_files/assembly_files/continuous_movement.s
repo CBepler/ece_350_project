@@ -23,16 +23,16 @@ sw $r1 3($r0) #start direction as right
 start_loop:
 
 #stall loop
-#addi $r3, $r0, 600   #r3 = 600
-#addi $r4, $r0, 0     #r4 =0
-#addi $r1, $r0, 30000 #r1 = 30000
-#outer_stall_loop:
-#addi $r2, $r0, 0     #r2 = 0
-#inner_stall_loop:
-#addi $r2, $r0, 1
-#blt $r2, $r1, inner_stall_loop
-#addi $r4, $r0, 1
-#blt $r4, $r3 outer_stall_loop
+addi $r3, $r0, 600   #r3 = 600
+addi $r4, $r0, 0     #r4 =0
+addi $r1, $r0, 30000 #r1 = 30000
+outer_stall_loop:
+addi $r2, $r0, 0     #r2 = 0
+inner_stall_loop:
+addi $r2, $r2, 1
+blt $r2, $r1, inner_stall_loop
+addi $r4, $r4, 1
+blt $r4, $r3 outer_stall_loop
 
 lw $r1, 0($r0)  #load in buttons value
 lw $r2, 100($r0) #load local x
