@@ -118,7 +118,7 @@ module VGAController(
 	
 
 	///// calc snake body and color ///// 
-	wire snake_color; //pixel indicator for snake segments
+	reg snake_color; //pixel indicator for snake segments
 	integer i; // Loop index
 
 	// Temporary register to hold the snake's color for the current pixel
@@ -130,6 +130,7 @@ module VGAController(
     reg [31:0] current_x;
     reg [31:0] current_y;
 
+/*
 	// Snake Square Calculation
 	always @(posedge clk) begin
 		snake_color = 0; // Reset for each pixel
@@ -159,6 +160,35 @@ module VGAController(
 			end
 		end
 	end
+*/
+
+	genvar j;
+	generate
+		for (j = 0; j < 100; j = j + 1) begin : snake_segment
+			wire [31:0] current_x = x_values[32*(j+1)-1 : 32*j];
+			wire [31:0] current_y = y_values[32*(j+1)-1 : 32*j];
+
+			always @(posedge clk) begin
+				snake_color = 0; // Reset for each pixel
+				current_color = no_color; // Default to background color
+		
+				if (current_x != -1 && current_y != -1) begin
+					
+					if (((x >= (board_x_start + current_x * tile_size)) && 
+						(x < (board_x_start + current_x * tile_size + box_size))) &&
+						((y >= (board_y_start + current_y * tile_size)) && 
+						(y < (board_y_start + current_y * tile_size + box_size)))) 
+
+					begin
+						snake_color = 1;
+						current_color = box_color;
+					end
+				end
+			end
+		end
+	endgenerate
+
+
 
 	// Assign the calculated color to the VGA output
 	assign colorDataBox = snake_color ? current_color : colorData; // Background or snake color
