@@ -22,24 +22,23 @@ sw $r1 3($r0) #start direction as right
 
 start_loop:
 
-#stall start_loop
-addi $r3, $r0, 600   #r3 = 600
-addi $r4, $r0, 0     #r4 =0
-addi $r1, $r0, 30000 #r1 = 30000
-outer_stall_loop:
-addi $r2, $r0, 0     #r2 = 0
-inner_stall_loop:
-addi $r2, $r0, 1
-blt $r2, $r1, inner_stall_loop
-addi $r4, $r0, 1
-blt $r4, $r3 outer_stall_loop
+#stall loop
+#addi $r3, $r0, 600   #r3 = 600
+#addi $r4, $r0, 0     #r4 =0
+#addi $r1, $r0, 30000 #r1 = 30000
+#outer_stall_loop:
+#addi $r2, $r0, 0     #r2 = 0
+#inner_stall_loop:
+#addi $r2, $r0, 1
+#blt $r2, $r1, inner_stall_loop
+#addi $r4, $r0, 1
+#blt $r4, $r3 outer_stall_loop
 
 lw $r1, 0($r0)  #load in buttons value
 lw $r2, 100($r0) #load local x
 lw $r3, 200($r0) #load local y
 lw $r5, 2($r0) #previous button state
 lw $r6, 3($r0) #direction
-addi $r4, $r0, 1 #button checker
 
 bne $r5, $r0 button_done
 
@@ -80,9 +79,9 @@ sw $r1 2($r0) #button as new previous button
 
 addi $r4, $r0, 9 #check if out of bounds
 blt $r2, $r0, done #branch if 0 > x
-blt $r4, $r2, done #branch if x > 10
+blt $r4, $r2, done #branch if x > 9
 blt $r3, $r0, done #branch if 0 > y
-blt $r4, $r3, done #branch if y > 10
+blt $r4, $r3, done #branch if y > 9
 
 #addi $r4, $r0, 1
 #sw $r4, 1($r0)
@@ -103,6 +102,7 @@ j start_loop
 #game_done:
 
 done:
+j done_done
 addi $r2, $r0, 0
 addi $r3, $r0, 0
 j update
@@ -111,3 +111,5 @@ j update
 new_direction:
 addi $r6, $r1, 0
 j button_done
+
+done_done:
