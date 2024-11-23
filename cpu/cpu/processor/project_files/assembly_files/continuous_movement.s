@@ -23,7 +23,7 @@ sw $r1 3($r0) #start direction as right
 start_loop:
 
 #stall loop
-addi $r3, $r0, 450   #r3 = 600
+addi $r3, $r0, 380   #r3 = 600
 addi $r4, $r0, 0     #r4 =0
 addi $r1, $r0, 30000 #r1 = 30000
 outer_stall_loop:
