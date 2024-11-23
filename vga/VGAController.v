@@ -61,7 +61,7 @@ module VGAController(
 		.wEn(1'b0)); 						 // We're always reading
 
 	// Color Palette to Map Color Address to 12-Bit Color
-	wire[BITS_PER_COLOR-1:0] colorData, colorDataBox; // 12-bit color data at current pixel
+	wire[BITS_PER_COLOR-1:0] colorData; // 12-bit color data at current pixel
 
 	RAM_VGA #(
 		.DEPTH(PALETTE_COLOR_COUNT), 		       // Set depth to contain every color		
@@ -93,13 +93,6 @@ module VGAController(
 	integer tile_size = 40;
 	
 
-	////// Imitialize array for snake location
-	/* reg [31:0]snake_pos_pixel_x, snake_pos_pixel_y; 
-	always @(posedge clk) begin
-		snake_pos_pixel_x = board_x_start + x_values[31:0] * tile_size;
-		snake_pos_pixel_y = board_y_start + y_values[31:0] * tile_size; 
-	end */
-
 	integer box_size = 40; 	//tile size
 
 	wire read_data;
@@ -108,47 +101,45 @@ module VGAController(
 	Ps2Interface ps(.ps2_clk(ps2_clk), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
 	
 	// Temporary register to hold the snake's color for the current pixel
-	reg [11:0] current_color; 
 	integer box_color = 12'd8;  // Green for active segments
+	reg [31:0] current_x;
+	reg [31:0] current_y;
+	integer j;
 
+	reg[BITS_PER_COLOR-1:0] colorDataBox; 
+	reg [31:0]snake_pos_x, snake_pos_y; 
 
-	genvar j;
-	generate
-		for (j = 0; j < 100; j = j + 1) begin : snake_segment
-			reg [31:0] current_x = x_values[32*(j+1) : 32*j];
-			reg [31:0] current_y = y_values[32*(j+1) : 32*j];
-			reg snake_color; //unique for each segment 
-
-			always @(posedge clk) begin
-				snake_color = 0; //initialize segment color
+	always @(posedge clk) begin
+		colorDataBox = colorData;
+		
+		for (j = 0; j < 3; j = j + 1) begin
+			current_x = x_values[32*(j) +: 32];
+			current_y = y_values[32*(j) +: 32];
+			//current_x = x_values[31:0];
+			//current_y = y_values[31:0];
+		
 				if (current_x != -1 && current_y != -1) begin
-					if (((x >= (board_x_start + current_x * tile_size)) && 
-						(x < (board_x_start + current_x * tile_size + box_size))) &&
-						((y >= (board_y_start + current_y * tile_size)) && 
-						(y < (board_y_start + current_y * tile_size + box_size)))) 
+					snake_pos_x = board_x_start + current_x * tile_size; 
+					snake_pos_y = board_y_start + current_y * tile_size;
 
+					if (((x >= (snake_pos_x)) && 
+						(x < (snake_pos_x + box_size))) &&
+						((y >= (snake_pos_y)) && 
+						(y < (snake_pos_y + box_size)))) 
 					begin
-						snake_color = 1;
-					end else begin 
-						snake_color = 0; 
-					end
+						colorDataBox = box_color;		// Assign the calculated color to the VGA output
+					end 
 				end
-			end
-
-		////////// SECTION THAT ASSIGNS EACH BOX A COLOR /////// 
-		// Assign the calculated color to the VGA output
-		assign colorDataBox = snake_color ? box_color : colorData; // Background or snake color
-
-		// Assign to output color from register if active
-		wire[BITS_PER_COLOR-1:0] colorOut; 			  // Output color 
-		assign colorOut = active ? colorDataBox : 12'd0; // When not active, output black
-
-		// Quickly assign the output colors to their channels using concatenation
-		assign {VGA_R, VGA_G, VGA_B} = colorOut;
-
 		end
-	endgenerate
 
+	end
+
+	// Assign to output color from register if active
+	wire[BITS_PER_COLOR-1:0] colorOut;
+	assign colorOut = active ? colorDataBox : 12'd0; // When not active, output black
+		
+	// Quickly assign the output colors to their channels using concatenation
+	assign {VGA_R, VGA_G, VGA_B} = colorOut;
 	
 endmodule
 
