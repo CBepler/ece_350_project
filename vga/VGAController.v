@@ -123,70 +123,51 @@ module VGAController(
 
 	// Temporary register to hold the snake's color for the current pixel
 	reg [11:0] current_color; 
-	integer [11:0] box_color = 12'd8;  // Green for active segments
-	integer [11:0] no_color = 12'd0;  // Black (background)
+	integer box_color = 12'd8;  // Green for active segments
+	integer no_color = 12'd0;  // Black (background)
 
 	// initialize current x and y values for the i-th segment
     reg [31:0] current_x;
     reg [31:0] current_y;
-
-/*
-	// Snake Square Calculation
-	always @(posedge clk) begin
-		snake_color = 0; // Reset for each pixel
-		current_color = no_color; // Default to background color
-		
-		//iterate through all possible snake blocks
-		for (i = 0; i < 100; i = i + 1) begin 	//Supports all 100 boxes
-
-		// Extract current x and y values for the i-th segment
-			// Compute the x and y values using constant ranges
-			current_x = x_values[32*i-1 : 32*(i-1)];
-			current_y = y_values[32*i-1 : 32*(i-1)];
-
-			// Checks if values are not -1
-			if (current_x != -1 && current_y != -1) begin
-			
-				//calc square pos & check if pixel is in it
-				if (((x >= (board_x_start + current_x * tile_size)) && 
-					(x < (board_x_start + current_x * tile_size + box_size))) && 
-					((y >= (board_y_start + current_y * tile_size)) && 
-					(y < (board_y_start + current_y * tile_size + box_size)))) 
-
-				begin
-					snake_color = 1; //Mark pixel as part of the snake
-					current_color = box_color; //Assign active segment color
-				end
-			end
-		end
-	end
-*/
 
 	genvar j;
 	generate
 		for (j = 0; j < 100; j = j + 1) begin : snake_segment
 			wire [31:0] current_x = x_values[32*(j+1)-1 : 32*j];
 			wire [31:0] current_y = y_values[32*(j+1)-1 : 32*j];
+			wire segment_color; //unique for each segment 
 
 			always @(posedge clk) begin
-				snake_color = 0; // Reset for each pixel
-				current_color = no_color; // Default to background color
-		
 				if (current_x != -1 && current_y != -1) begin
-					
+					segment color = 0; //initialize segment color
 					if (((x >= (board_x_start + current_x * tile_size)) && 
 						(x < (board_x_start + current_x * tile_size + box_size))) &&
 						((y >= (board_y_start + current_y * tile_size)) && 
 						(y < (board_y_start + current_y * tile_size + box_size)))) 
 
 					begin
-						snake_color = 1;
-						current_color = box_color;
+						segment_color = 1;
+					end else begin 
+						segment_color = 0; 
 					end
 				end
 			end
 		end
 	endgenerate
+
+//now combine color segments
+	always @(posedge clk) begin
+    snake_color = 0; // Default to no snake
+    current_color = no_color; // Default background color
+
+    // Combine all segment colors??? not sure how this works
+    for (j = 0; j < 100; j = j + 1) begin
+        if (snake_segment[j].segment_color) begin
+            snake_color = 1; // Mark the pixel as part of the snake
+            current_color = box_color; // Assign the segment color (green)
+			end
+		end
+	end
 
 
 
