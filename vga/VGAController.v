@@ -4,7 +4,7 @@ module VGAController(
 	input clk25, 			// 100 MHz System Clock
 	input reset, 		// Reset Signal
 	input [3199:0] x_values, 	//these values are the array that will hold the individual parts of the snake 
-	input [3199:0] y_values,	//we will only be changing the size of the head
+	input [3199:0] y_values,	//we will only be changing the size of the head --> -1 if there is not a part
 	input game_done,
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
@@ -42,7 +42,7 @@ module VGAController(
 	assign map_width_min = 48;
 	assign map_width_max = 449;
 	assign map_height_min = 48;
-	assign map_height_max = 441;
+	assign map_height_max = 444;
 
 
 	integer board_x_start = 48;
@@ -54,13 +54,7 @@ module VGAController(
 	reg [31:0]snake_pos_pixel_x, snake_pos_pixel_y; 
 	always @(posedge clk) begin
 		snake_pos_pixel_x = board_x_start + x_values[31:0] * tile_size;
-		snake_pos_pixel_y = board_y_start + y_values[31:0] * tile_size;
-		
-		// if(snake_pos_pixel_x > map_width_max || snake_pos_pixel_x < map_width_min)
-		// 	snake_pos_pixel_x = board_x_start; 
-		// if(snake_pos_pixel_y > map_height_max || snake_pos_pixel_y < map_width_min)
-		// 	snake_pos_pixel_y = board_y_start; 
-		
+		snake_pos_pixel_y = board_y_start + y_values[31:0] * tile_size; 
 	end
 
 	
@@ -122,12 +116,52 @@ module VGAController(
 		.dataOut(colorData),				       // Color at current pixel
 		.wEn(1'b0)); 						       // We're always reading
 	
+
+	///// calc snake body and color ///// 
+	wire snake_color; //pixel indicator for snake segments
+	integer i; // Loop index
+
+	// Temporary register to hold the snake's color for the current pixel
+	reg [11:0] current_color; 
+	integer box_color = 12'd8;  // Green for active segments
+	integer no_color = 12'd0;  // Black (background)
+
+	// Snake Square Calculation
+	always @(posedge clk) begin
+		snake_color = 0; // Reset for each pixel
+		current_color = no_color; // Default to background color
+		
+		//iterate through all possible snake blocks
+		for (i = 0; i < 100; i = i + 1) begin 	//Supports all 100 boxes
+
+			// checks if values are not -1
+			if (x_values[32*i-1 : 32*(i-1)] != -1 && y_values[32*i-1 : 32*(i-1)] != -1) begin
+			
+				//calc square pos & check if pixel is in it
+				if (((x >= (board_x_start + x_values[32*i-1 : 32*(i-1)] * tile_size)) && 
+					(x < (board_x_start + x_values[32*i-1 : 32*(i-1)] * tile_size + box_size))) && 
+					((y >= (board_y_start + y_values[32*i-1 : 32*(i-1)] * tile_size)) && 
+					(y < (board_y_start + y_values[32*i-1 : 32*(i-1)] * tile_size + box_size)))) 
+
+				begin
+					snake_color = 1; //Mark pixel as part of the snake
+					current_color = box_color; //Assign active segment color
+				end
+			end
+		end
+	end
+
+	// Assign the calculated color to the VGA output
+	assign colorDataBox = snake_color ? current_color : colorData; // Background or snake color
+
+/*
 	//assign color to green box 
 	wire inBox;
 	assign inBox = (((x >= snake_pos_pixel_x) && (x < snake_pos_pixel_x + box_size)) && ((y >= snake_pos_pixel_y) && (y < snake_pos_pixel_y + box_size))) ? 1 : 0;
 	
 	integer box_color = 12'd8;
-	assign colorDataBox = inBox ? box_color : colorData; 
+	assign colorDataBox = inBox ? box_color : colorData; 	//determines if pixel is in box for color designation 
+*/
 
 	// Assign to output color from register if active
 	wire[BITS_PER_COLOR-1:0] colorOut; 			  // Output color 
