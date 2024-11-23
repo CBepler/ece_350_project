@@ -123,8 +123,12 @@ module VGAController(
 
 	// Temporary register to hold the snake's color for the current pixel
 	reg [11:0] current_color; 
-	integer box_color = 12'd8;  // Green for active segments
-	integer no_color = 12'd0;  // Black (background)
+	integer [11:0] box_color = 12'd8;  // Green for active segments
+	integer [11:0] no_color = 12'd0;  // Black (background)
+
+	// initialize current x and y values for the i-th segment
+    reg [31:0] current_x;
+    reg [31:0] current_y;
 
 	// Snake Square Calculation
 	always @(posedge clk) begin
@@ -134,14 +138,19 @@ module VGAController(
 		//iterate through all possible snake blocks
 		for (i = 0; i < 100; i = i + 1) begin 	//Supports all 100 boxes
 
-			// checks if values are not -1
-			if (x_values[32*i-1 : 32*(i-1)] != -1 && y_values[32*i-1 : 32*(i-1)] != -1) begin
+		// Extract current x and y values for the i-th segment
+			// Compute the x and y values using constant ranges
+			current_x = x_values[32*i-1 : 32*(i-1)];
+			current_y = y_values[32*i-1 : 32*(i-1)];
+
+			// Checks if values are not -1
+			if (current_x != -1 && current_y != -1) begin
 			
 				//calc square pos & check if pixel is in it
-				if (((x >= (board_x_start + x_values[32*i-1 : 32*(i-1)] * tile_size)) && 
-					(x < (board_x_start + x_values[32*i-1 : 32*(i-1)] * tile_size + box_size))) && 
-					((y >= (board_y_start + y_values[32*i-1 : 32*(i-1)] * tile_size)) && 
-					(y < (board_y_start + y_values[32*i-1 : 32*(i-1)] * tile_size + box_size)))) 
+				if (((x >= (board_x_start + current_x * tile_size)) && 
+					(x < (board_x_start + current_x * tile_size + box_size))) && 
+					((y >= (board_y_start + current_y * tile_size)) && 
+					(y < (board_y_start + current_y * tile_size + box_size)))) 
 
 				begin
 					snake_color = 1; //Mark pixel as part of the snake
