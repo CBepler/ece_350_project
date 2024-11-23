@@ -102,7 +102,6 @@ j start_loop
 #game_done:
 
 done:
-j done_done
 addi $r2, $r0, 0
 addi $r3, $r0, 0
 j update
@@ -111,5 +110,3 @@ j update
 new_direction:
 addi $r6, $r1, 0
 j button_done
-
-done_done:
