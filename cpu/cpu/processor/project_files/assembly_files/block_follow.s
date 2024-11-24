@@ -56,7 +56,7 @@ inner_stall_loop:
 addi $r2, $r2, 1
 blt $r2, $r1, inner_stall_loop
 addi $r4, $r4, 1
-blt $r4, $r3 outer_stall_loop
+blt $r4, $r3, outer_stall_loop
 
 lw $r1, 0($r0)  #load in buttons value
 lw $r2, 100($r0) #load local x head
@@ -119,7 +119,7 @@ sw $r2, 300($r0)
 sw $r3, 400($r0)
 
 #loop set other parts
-addi $r4, $r4, 1
+addi $r4, $r0, 1
 tail_set_loop:
 blt $r7, $r4, done_tail_update     #  $r7 hold length 0 indexed decrement down to reach head
 addi $r5, $r7, 100  #100 range for local x 
