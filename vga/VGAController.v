@@ -18,53 +18,11 @@ module VGAController(
 	// Lab Memory Files Location
 	localparam FILES_PATH = "C:/Users/cgb45/Downloads/ece_350_project-main/ece_350_project-main/vga/";
 
-	// Clock divider 100 MHz -> 25 MHz
-//	wire clk25; // 25MHz clock
-
-//	reg[1:0] pixCounter = 0;      // Pixel counter to divide the clock
-//    assign clk25 = pixCounter[1]; // Set the clock high whenever the second bit (2) is high
-//	always @(posedge clk) begin
-//		pixCounter <= pixCounter + 1; // Since the reg is only 3 bits, it will reset every 8 cycles
-//	end
-
 	// VGA Timing Generation for a Standard VGA Screen
 	localparam 
 		VIDEO_WIDTH = 640,  // Standard VGA Width
 		VIDEO_HEIGHT = 480; // Standard VGA Height
 
-	wire active, screenEnd;
-	wire[31:0] x;
-	wire[31:0] y;
-
-	//initialize map borders
-	wire[31:0] map_width_min, map_width_max;
-	wire[31:0] map_height_min, map_height_max; 
-	assign map_width_min = 48;
-	assign map_width_max = 449;
-	assign map_height_min = 48;
-	assign map_height_max = 444;
-
-
-	integer board_x_start = 48;
-	integer board_y_start = 48;
-	integer tile_size = 40;
-	
-
-	////// Imitialize array for snake location
-	reg [31:0]snake_pos_pixel_x, snake_pos_pixel_y; 
-	always @(posedge clk) begin
-		snake_pos_pixel_x = board_x_start + x_values[31:0] * tile_size;
-		snake_pos_pixel_y = board_y_start + y_values[31:0] * tile_size; 
-	end
-
-	
-	integer box_size = 40; 	//tile size
-
-	wire read_data;
-	wire[7:0] rx_data;
-	
-	Ps2Interface ps(.ps2_clk(ps2_clk), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
-	
 	
 	VGATimingGenerator #(
 		.HEIGHT(VIDEO_HEIGHT), // Use the standard VGA Values
@@ -103,7 +61,7 @@ module VGAController(
 		.wEn(1'b0)); 						 // We're always reading
 
 	// Color Palette to Map Color Address to 12-Bit Color
-	wire[BITS_PER_COLOR-1:0] colorData, colorDataBox; // 12-bit color data at current pixel
+	wire[BITS_PER_COLOR-1:0] colorData; // 12-bit color data at current pixel
 
 	RAM_VGA #(
 		.DEPTH(PALETTE_COLOR_COUNT), 		       // Set depth to contain every color		
@@ -114,69 +72,74 @@ module VGAController(
 		.clk(clk25), 							   	   // Rising edge of the 100 MHz clk
 		.addr(colorAddr),					       // Address from the ImageData RAM
 		.dataOut(colorData),				       // Color at current pixel
-		.wEn(1'b0)); 						       // We're always reading
+		.wEn(1'b0)); 						       // We're always 
+		
+////////////////////////////////////////////////////////
+	wire active, screenEnd;
+	wire[31:0] x;
+	wire[31:0] y;
+
+	//initialize map borders
+	wire[31:0] map_width_min, map_width_max;
+	wire[31:0] map_height_min, map_height_max; 
+	assign map_width_min = 48;
+	assign map_width_max = 449;
+	assign map_height_min = 48;
+	assign map_height_max = 444;
+
+
+	integer board_x_start = 48;
+	integer board_y_start = 48;
+	integer tile_size = 40;
 	
 
-	///// calc snake body and color ///// 
-	wire snake_color; //pixel indicator for snake segments
-	integer i; // Loop index
+	integer box_size = 40; 	//tile size
 
+	wire read_data;
+	wire[7:0] rx_data;
+	
+	Ps2Interface ps(.ps2_clk(ps2_clk), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
+	
 	// Temporary register to hold the snake's color for the current pixel
-	reg [11:0] current_color; 
-	integer [11:0] box_color = 12'd8;  // Green for active segments
-	integer [11:0] no_color = 12'd0;  // Black (background)
+	integer box_color = 12'd8;  // Green for active segments
+	reg [31:0] current_x;
+	reg [31:0] current_y;
+	integer j;
 
-	// initialize current x and y values for the i-th segment
-    reg [31:0] current_x;
-    reg [31:0] current_y;
+	reg[BITS_PER_COLOR-1:0] colorDataBox; 
+	reg [31:0]snake_pos_x, snake_pos_y; 
 
-	// Snake Square Calculation
 	always @(posedge clk) begin
-		snake_color = 0; // Reset for each pixel
-		current_color = no_color; // Default to background color
+		colorDataBox = colorData;
 		
-		//iterate through all possible snake blocks
-		for (i = 0; i < 100; i = i + 1) begin 	//Supports all 100 boxes
+		for (j = 0; j < 3; j = j + 1) begin
+			current_x = x_values[32*(j) +: 32];
+			current_y = y_values[32*(j) +: 32];
+			//current_x = x_values[31:0];
+			//current_y = y_values[31:0];
+		
+				if (current_x != -1 && current_y != -1) begin
+					snake_pos_x = board_x_start + current_x * tile_size; 
+					snake_pos_y = board_y_start + current_y * tile_size;
 
-		// Extract current x and y values for the i-th segment
-			// Compute the x and y values using constant ranges
-			current_x = x_values[32*i-1 : 32*(i-1)];
-			current_y = y_values[32*i-1 : 32*(i-1)];
-
-			// Checks if values are not -1
-			if (current_x != -1 && current_y != -1) begin
-			
-				//calc square pos & check if pixel is in it
-				if (((x >= (board_x_start + current_x * tile_size)) && 
-					(x < (board_x_start + current_x * tile_size + box_size))) && 
-					((y >= (board_y_start + current_y * tile_size)) && 
-					(y < (board_y_start + current_y * tile_size + box_size)))) 
-
-				begin
-					snake_color = 1; //Mark pixel as part of the snake
-					current_color = box_color; //Assign active segment color
+					if (((x >= (snake_pos_x)) && 
+						(x < (snake_pos_x + box_size))) &&
+						((y >= (snake_pos_y)) && 
+						(y < (snake_pos_y + box_size)))) 
+					begin
+						colorDataBox = box_color;		// Assign the calculated color to the VGA output
+					end 
 				end
-			end
 		end
+
 	end
 
-	// Assign the calculated color to the VGA output
-	assign colorDataBox = snake_color ? current_color : colorData; // Background or snake color
-
-/*
-	//assign color to green box 
-	wire inBox;
-	assign inBox = (((x >= snake_pos_pixel_x) && (x < snake_pos_pixel_x + box_size)) && ((y >= snake_pos_pixel_y) && (y < snake_pos_pixel_y + box_size))) ? 1 : 0;
-	
-	integer box_color = 12'd8;
-	assign colorDataBox = inBox ? box_color : colorData; 	//determines if pixel is in box for color designation 
-*/
-
 	// Assign to output color from register if active
-	wire[BITS_PER_COLOR-1:0] colorOut; 			  // Output color 
+	wire[BITS_PER_COLOR-1:0] colorOut;
 	assign colorOut = active ? colorDataBox : 12'd0; // When not active, output black
-
+		
 	// Quickly assign the output colors to their channels using concatenation
 	assign {VGA_R, VGA_G, VGA_B} = colorOut;
-
+	
 endmodule
+
