@@ -18,7 +18,7 @@ sw $r0, 2($r0) #zero out previous button state
 addi $r1, $r0, 2
 sw $r1, 3($r0) #start direction as right 
 
-addi $r1, $r0, 2
+addi $r1, $r0, 1
 sw $r1, 4($r0)  #set length  (0 indexed)
 
 #loop set all tail parts to -1
