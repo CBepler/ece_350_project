@@ -24,29 +24,6 @@ sw $r1, 3($r0) #start direction as right
 addi $r1, $r0, 1
 sw $r1, 4($r0)  #set length  (0 indexed)
 
-#loop set all tail parts to -1
-#addi $r1, $r0, 101
-#addi $r2, $r0, 199
-#addi $r3, $r0, -1
-#set_loop_x:
-#blt $r2, $r1, set_done_x
-#sw $r3, 0($r1)
-#addi $r1, $r1, 1
-#j set_loop_x
-
-#set_done_x:
-
-#addi $r1, $r0, 201
-#addi $r2, $r0, 299
-#addi $r3, $r0, -1
-#set_loop_y:
-#blt $r2, $r1, set_done_y
-#sw $r3, 0($r1)
-#addi $r1, $r1, 1
-#j set_loop_y
-
-#set_done_y:
-
 start_loop:
 
 #stall loop
