@@ -110,15 +110,7 @@ blt $r4, $r3, reset #branch if y > 9
 
 update:
 
-#local store back
-sw $r2, 100($r0)
-sw $r3, 200($r0)
-
-#VGA store back
-sw $r2, 300($r0)
-sw $r3, 400($r0)
-
-#loop set other parts
+#loop set other tail parts
 addi $r4, $r0, 1
 tail_set_loop:
 blt $r7, $r4, done_tail_update     #  $r7 hold length 0 indexed decrement down to reach head
@@ -136,6 +128,16 @@ addi $r7, $r7, -1
 j tail_set_loop
 
 done_tail_update:
+
+
+#local store back for head
+sw $r2, 100($r0)
+sw $r3, 200($r0)
+
+#VGA store back for head
+sw $r2, 300($r0)
+sw $r3, 400($r0)
+
 
 j start_loop
 
