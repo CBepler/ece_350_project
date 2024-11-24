@@ -67,7 +67,7 @@ module Wrapper (input clk_100mhz,
 
 
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "basic_box_movement";
+	localparam INSTR_FILE = "block_follow";
 	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
@@ -107,19 +107,29 @@ module Wrapper (input clk_100mhz,
 
 	 assign memDataOut = (memAddr[11:0] == 0) ? button : dmemDataOut; 
 
-	 reg [31:0] x_values_reg, y_values_reg;
-	 wire [31:0] x_values, y_values;
+	 reg [3199:0] x_values_reg, y_values_reg;
+	 wire [3199:0] x_values, y_values;
+	 
+	 initial begin
+	       x_values_reg = -1;
+	       y_values_reg = -1;
+	 end
 	
 	assign x_values = x_values_reg;
 	assign y_values = y_values_reg;
 
 	always @(posedge clk_25) begin
-		if(memAddr[11:0] == 300 && mwe) begin
-			x_values_reg = memDataIn;
+	    if(memAddr[11:0] == 5 && mwe) begin
+	       x_values_reg  = -1;
+	       y_values_reg  = -1;
+	    end
+	
+		if(memAddr[11:0] >= 300 && memAddr[11:0] <= 399 && mwe) begin
+			x_values_reg[(memAddr[11:0] - 300) * 32 +: 32] = memDataIn;
 		end
 
-		if(memAddr[11:0] == 400 && mwe) begin
-			y_values_reg = memDataIn;
+		if(memAddr[11:0] >= 400 && memAddr[11:0] <= 499 && mwe) begin
+			y_values_reg[(memAddr[11:0] - 400) * 32 +: 32] = memDataIn;
 		end
 	end
 	
@@ -142,13 +152,13 @@ module Wrapper (input clk_100mhz,
 
 	 VGAController control(.clk(clk_100mhz), .clk25(clk_25), .reset(reset), .x_values(x_values), .y_values(y_values), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
 
-	//  wire [31:0] led_bits;
-	//  assign led_bits = memDataIn;
+	wire [31:0] led_bits;
+	assign led_bits = memDataIn;
 
-	//  wire led_we;
-	//  assign led_we = (mwe && memAddr[11:0] == 1) ? 1'b1 : 1'b0;
+	wire led_we;
+	assign led_we = (mwe && memAddr[11:0] == 302) ? 1'b1 : 1'b0;
 
 
-	//  led light(.leds(led_bits), .LED(LED), .clk(clk_29), .led_we(led_we));
+	led light(.leds(led_bits), .LED(LED), .clk(clk_25), .led_we(led_we));
 
 endmodule
