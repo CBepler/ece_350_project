@@ -9,6 +9,9 @@
 
 reset:
 
+addi $r1, $r0, 1
+sw $r1, 5($r0)      #5 is for reset status
+
 sw $r0, 100($r0)  #100 is local x of box
 sw $r0, 200($r0)  #200 is local y of box
 
@@ -112,9 +115,10 @@ update:
 
 #loop set other tail parts
 addi $r4, $r0, 1
+addi $r8, $r7, 0
 tail_set_loop:
-blt $r7, $r4, done_tail_update     #  $r7 hold length 0 indexed decrement down to reach head
-addi $r5, $r7, 100  #100 range for local x 
+blt $r8, $r4, done_tail_update     #  $r7 hold length 0 indexed decrement down to reach head
+addi $r5, $r8, 100  #100 range for local x 
 lw $r6, -1($r5)    #load in x value of 1 ahead piece
 sw $r6, 0($r5)    #store in new position
 sw $r6, 200($r5)    #store in new position in VGA range
@@ -124,7 +128,7 @@ lw $r6, -1($r5)    #load in y value of 1 ahead piece
 sw $r6, 0($r5)    #store in new position
 sw $r6, 200($r5)    #store in new position in VGA range
 
-addi $r7, $r7, -1
+addi $r8, $r8, -1
 j tail_set_loop
 
 done_tail_update:
