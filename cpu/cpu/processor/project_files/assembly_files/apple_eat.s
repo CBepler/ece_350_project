@@ -49,7 +49,6 @@ lw $r2, 100($r0) #load local x head
 lw $r3, 200($r0) #load local y head
 lw $r5, 2($r0) #previous button state
 lw $r6, 3($r0) #direction
-lw $r7, 4($r0) #snake length
 
 bne $r5, $r0 button_done
 
@@ -103,7 +102,7 @@ lw $r10, 8($r0) # Store food y position
 bne $r2, $r9, food_update_done
 bne $r3, $r10, food_update_done
 addi $r9, $r0, 1
-sw $r1, 6($r0) #new food needed
+sw $r9, 6($r0) #new food needed
 lw $r7, 4($r0) #snake length
 addi $r7, $r7, 1
 sw $r7, 4($r0)
@@ -111,6 +110,7 @@ food_update_done:
 
 #loop set other tail parts
 addi $r4, $r0, 1
+lw $r7, 4($r0) #snake length
 addi $r8, $r7, 0
 tail_set_loop:
 blt $r8, $r4, done_tail_update     #  $r7 hold length 0 indexed decrement down to reach head
