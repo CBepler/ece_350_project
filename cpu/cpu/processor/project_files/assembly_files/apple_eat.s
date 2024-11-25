@@ -27,8 +27,8 @@ sw $r1, 4($r0)  #set length  (0 indexed)
 sw $r1, 6($r0) #6 is for need new food
 
 addi $r1, $r0, -1
-sw $r1, 7($r0)   #food x position
-sw $r1, 8($r0)   #food y position
+sw $r1, 11($r0)   #food x position
+sw $r1, 12($r0)   #food y position
 
 start_loop:
 
@@ -93,12 +93,11 @@ blt $r4, $r2, reset #branch if x > 9
 blt $r3, $r0, reset #branch if 0 > y
 blt $r4, $r3, reset #branch if y > 9
 
-update:
 
 #Eat food Check
 # load food position
-lw $r9, 7($r0) # Store food x position
-lw $r10, 8($r0) # Store food y position
+lw $r9, 11($r0) # load food x position
+lw $r10, 12($r0) # load food y position
 bne $r2, $r9, food_update_done
 bne $r3, $r10, food_update_done
 addi $r9, $r0, 1
@@ -187,8 +186,8 @@ j check_snake_loop
 
 food_position_valid:
 # Store final food position
-sw $r9, 7($r0) # Store food x position
-sw $r10, 8($r0) # Store food y position
+sw $r9, 11($r0) # Store food x position
+sw $r10, 12($r0) # Store food y position
 # Update VGA display for food
 sw $r9, 9($r0) # Store food x position in VGA
 sw $r10, 10($r0) # Store food y position in VGA
