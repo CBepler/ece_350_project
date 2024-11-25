@@ -1,6 +1,5 @@
 module LFSR(
-    input clk,           
-    input reset,         
+    input clk,                  
     output [3:0] x,      
     output [3:0] y       
 );
@@ -16,11 +15,13 @@ module LFSR(
 
     // Always block to handle the shift register logic
     always @(posedge clk or posedge reset) begin
-        if (reset) begin
+        initial begin
             // Initialize the registers to a non-zero value 
             x_reg <= 4'b0011;  // Non-zero initializations
-            y_reg <= 4'b1011;  
-        end else begin
+            y_reg <= 4'b1011; 
+        end 
+
+        begin
             // Shift the registers and insert feedback into the LSB
             x_reg <= {x_reg[2:0], x_feed}; // Shift left and insert feedback bit for x
             y_reg <= {y_reg[2:0], y_feed}; // Shift left and insert feedback bit for y
