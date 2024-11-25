@@ -5,7 +5,7 @@
 # 300 - 399 is vga x
 # 400 - 499 is vga y
 
-#food: take value and show food
+#food: #take value and show food
 
 reset:
 
@@ -55,9 +55,9 @@ lw $r8, 6($r0) #food need
 addi $r4, $r0, 1
 
 
-food_generation_section:
+#food_generation_section
 bne $r8, $r4, food_done
-sw $r0, 6($r0) #no food needed next time
+#sw $r0, 6($r0) #no food needed next time   (commented out so it contionuosly generates for testing)
 lw $r9, 7($r0) #load in random x value
 lw $r10, 8($r0) #load in random y value
 
@@ -80,7 +80,7 @@ bne $r10, $r14, position_different # If y coordinates don't match, check next pa
 addi $r9, $r9, 1
 addi $r15, $r0, 9
 blt $r15, $r9, wrap_x # If x > 9, wrap to 0
-j restart_check_loopp # Restart check with new position
+j restart_check_loop # Restart check with new position
 
 wrap_x:
 addi $r9, $r0, 0 # Set x back to 0
