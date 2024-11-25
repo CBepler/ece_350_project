@@ -50,10 +50,6 @@ lw $r3, 200($r0) #load local y head
 lw $r5, 2($r0) #previous button state
 lw $r6, 3($r0) #direction
 lw $r7, 4($r0) #snake length
-lw $r8, 6($r0) #food need
-
-addi $r4, $r0, 1
-
 
 bne $r5, $r0 button_done
 
@@ -130,7 +126,11 @@ sw $r2, 300($r0)
 sw $r3, 400($r0)
 
 
+
 #food_generation_section
+addi $r4, $r0, 1
+lw $r8, 6($r0) #food need
+lw $r7, 4($r0) #snake length
 bne $r8, $r4, food_done
 #sw $r0, 6($r0) #no food needed next time   (commented out so it contionuosly generates for testing)
 lw $r9, 7($r0) #load in random x value
