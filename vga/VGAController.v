@@ -81,6 +81,7 @@ module VGAController(
 		.dataOut(colorData),				       // Color at current pixel
 		.wEn(1'b0)); 						       // We're always 
 
+	// SPRITE RAM / CODE
 		RAM_VGA #(
 		.DEPTH(SPRITE_COUNT * 2500), 		       		
 		.DATA_WIDTH(1'b1), 		      
@@ -92,10 +93,6 @@ module VGAController(
 		.dataOut(sprite_colorAddr),				       
 		.wEn(1'b0)); 	
 
-///////////////////////////////////////////////////////
-	// calculate sprite address 
-	wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;  
-	wire sprite_colorAddr, sprite_bit; 
 
 ///////////////////////////////////////////////////////
 
@@ -154,17 +151,26 @@ module VGAController(
 
 	/////// food generation code ////////
 		food_pos_x = board_x_start + food_x * tile_size;
-		food_pos_y = board_x_start + food_y * tile_size;
+		food_pos_y = board_y_start + food_y * tile_size;
+
 		wire in_foodbox;
 		assign in_foodbox = ((x >= (food_pos_x)) && (x < (food_pos_x + box_size))) && ((y >= (food_pos_y)) && (y < (food_pos_y + box_size))); 
-		assign sprite_bit = (in_foodbox && sprite_colorAddr); 
+
+		///////////////////////////////////////////////////////
+		// calculate sprite address 
+		wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;  
+		wire sprite_colorAddr; //output of sprite colors 
+		assign sprite_address = (y % 50) * 50 + (x % 50); //hardcode apple sprite address to 1st??? (check tho)
 
 		//check if red box or sprite 
-        if (in_foodbox)begin 
-			colorDataBox = sprite_bit ? sprite_colorAddr : food_color;		// Assign the calculated color to the VGA output or SPRITE OVERLAY
-		end 
-
-	end
+		if (in_foodbox) begin
+			if (sprite_colorAddr == 1'b1) begin
+				colorDataBox = 12'h000;  // black for sprite pixels
+			end else begin
+				colorDataBox = food_color;  // Default to food color
+			end
+		end
+	end 
 
 	// Assign to output color from register if active
 	wire[BITS_PER_COLOR-1:0] colorOut;
