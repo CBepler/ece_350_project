@@ -5,6 +5,8 @@ module VGAController(
 	input reset, 		// Reset Signal
 	input [3199:0] x_values, 	//these values are the array that will hold the individual parts of the snake 
 	input [3199:0] y_values,	//we will only be changing the size of the head --> -1 if there is not a part
+	input [31:0] food_x,
+	input [31:0] food_y,
 	input game_done,
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
@@ -82,13 +84,13 @@ module VGAController(
 	//initialize map borders
 	wire[31:0] map_width_min, map_width_max;
 	wire[31:0] map_height_min, map_height_max; 
-	assign map_width_min = 48;
+	assign map_width_min = 49;
 	assign map_width_max = 449;
 	assign map_height_min = 48;
 	assign map_height_max = 444;
 
 
-	integer board_x_start = 48;
+	integer board_x_start = 49;
 	integer board_y_start = 48;
 	integer tile_size = 40;
 	
@@ -102,13 +104,15 @@ module VGAController(
 	
 	// Temporary register to hold the snake's color for the current pixel
 	integer box_color = 12'd8;  // Green for active segments
+	integer food_color = 32'hFF0000;
 	reg [31:0] current_x;
 	reg [31:0] current_y;
 	integer j;
 
 	reg[BITS_PER_COLOR-1:0] colorDataBox; 
-	reg [31:0]snake_pos_x, snake_pos_y; 
+	reg [31:0]snake_pos_x, snake_pos_y, food_pos_x, food_pos_y; 
 
+    //try slowing clock with clock division
 	always @(posedge clk) begin
 		colorDataBox = colorData;
 		
@@ -131,7 +135,17 @@ module VGAController(
 					end 
 				end
 		end
-
+		
+		food_pos_x = board_x_start + food_x * tile_size;
+		food_pos_y = board_x_start + food_y * tile_size;
+		
+        if (((x >= (food_pos_x)) && 
+			(x < (food_pos_x + box_size))) &&
+			((y >= (food_pos_y)) && 
+			(y < (food_pos_y + box_size)))) 
+		begin
+			colorDataBox = food_color;		// Assign the calculated color to the VGA output
+		end 
 	end
 
 	// Assign to output color from register if active
