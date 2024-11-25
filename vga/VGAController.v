@@ -5,9 +5,9 @@ module VGAController(
 	input reset, 		// Reset Signal
 	input [3199:0] x_values, 	//these values are the array that will hold the individual parts of the snake 
 	input [3199:0] y_values,	//we will only be changing the size of the head --> -1 if there is not a part
+	input game_done,
 	input [31:0] food_x,
 	input [31:0] food_y,
-	input game_done,
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
 	output[3:0] VGA_R,  // Red Signal Bits
@@ -24,7 +24,6 @@ module VGAController(
 	localparam 
 		VIDEO_WIDTH = 640,  // Standard VGA Width
 		VIDEO_HEIGHT = 480; // Standard VGA Height
-
 	
 	VGATimingGenerator #(
 		.HEIGHT(VIDEO_HEIGHT), // Use the standard VGA Values
@@ -43,6 +42,12 @@ module VGAController(
 	localparam 
 		PIXEL_COUNT = VIDEO_WIDTH*VIDEO_HEIGHT, 	             // Number of pixels on the screen
 		PIXEL_ADDRESS_WIDTH = $clog2(PIXEL_COUNT) + 1,           // Use built in log2 command
+		
+		SPRITE_COUNT = 94, 
+		SPRITE_ADDRESS_WIDTH = $clog2(SPRITE_COUNT*2500) + 1,
+		PIXEL_ADDRESS_WIDTH = $clog2(PIXEL_COUNT) + 1,           // Use built in log2 command
+		ASCII_ADDRESS_WIDTH = $clog2(256) + 1, 
+		
 		BITS_PER_COLOR = 12, 	  								 // Nexys A7 uses 12 bits/color
 		PALETTE_COLOR_COUNT = 256, 								 // Number of Colors available
 		PALETTE_ADDRESS_WIDTH = $clog2(PALETTE_COLOR_COUNT) + 1; // Use built in log2 Command
@@ -75,8 +80,22 @@ module VGAController(
 		.addr(colorAddr),					       // Address from the ImageData RAM
 		.dataOut(colorData),				       // Color at current pixel
 		.wEn(1'b0)); 						       // We're always 
-		
-////////////////////////////////////////////////////////
+
+	// SPRITE RAM / CODE
+		RAM_VGA #(
+		.DEPTH(SPRITE_COUNT * 2500), 		       		
+		.DATA_WIDTH(1'b1), 		      
+		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
+		.MEMFILE({FILES_PATH, "sprites.mem"}))  
+	SpriteData(
+		.clk(clk), 							   	   
+		.addr(sprite_address),					     
+		.dataOut(sprite_colorAddr),				       
+		.wEn(1'b0)); 	
+
+
+///////////////////////////////////////////////////////
+
 	wire active, screenEnd;
 	wire[31:0] x;
 	wire[31:0] y;
@@ -84,33 +103,27 @@ module VGAController(
 	//initialize map borders
 	wire[31:0] map_width_min, map_width_max;
 	wire[31:0] map_height_min, map_height_max; 
-	assign map_width_min = 49;
+	assign map_width_min = 48;
 	assign map_width_max = 449;
 	assign map_height_min = 48;
 	assign map_height_max = 444;
 
-
-	integer board_x_start = 49;
+	integer board_x_start = 48;
 	integer board_y_start = 48;
 	integer tile_size = 40;
-	
 
 	integer box_size = 40; 	//tile size
 
-	wire read_data;
-	wire[7:0] rx_data;
-	
-	Ps2Interface ps(.ps2_clk(ps2_clk), .ps2_data(ps2_data), .rx_data(rx_data), .read_data(read_data));
-	
 	// Temporary register to hold the snake's color for the current pixel
 	integer box_color = 12'd8;  // Green for active segments
-	integer food_color = 32'hFF0000;
+	integer food_color = 12'd12;
+
 	reg [31:0] current_x;
 	reg [31:0] current_y;
 	integer j;
 
 	reg[BITS_PER_COLOR-1:0] colorDataBox; 
-	reg [31:0]snake_pos_x, snake_pos_y, food_pos_x, food_pos_y; 
+	reg [31:0] snake_pos_x, snake_pos_y, food_pos_x, food_pos_y; 
 
     //try slowing clock with clock division
 	always @(posedge clk) begin
@@ -135,18 +148,29 @@ module VGAController(
 					end 
 				end
 		end
-		
+
+	/////// food generation code ////////
 		food_pos_x = board_x_start + food_x * tile_size;
-		food_pos_y = board_x_start + food_y * tile_size;
-		
-        if (((x >= (food_pos_x)) && 
-			(x < (food_pos_x + box_size))) &&
-			((y >= (food_pos_y)) && 
-			(y < (food_pos_y + box_size)))) 
-		begin
-			colorDataBox = food_color;		// Assign the calculated color to the VGA output
-		end 
-	end
+		food_pos_y = board_y_start + food_y * tile_size;
+
+		wire in_foodbox;
+		assign in_foodbox = ((x >= (food_pos_x)) && (x < (food_pos_x + box_size))) && ((y >= (food_pos_y)) && (y < (food_pos_y + box_size))); 
+
+		///////////////////////////////////////////////////////
+		// calculate sprite address 
+		wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;  
+		wire sprite_colorAddr; //output of sprite colors 
+		assign sprite_address = (y % 50) * 50 + (x % 50); //hardcode apple sprite address to 1st??? (check tho)
+
+		//check if red box or sprite 
+		if (in_foodbox) begin
+			if (sprite_colorAddr == 1'b1) begin
+				colorDataBox = 12'h000;  // black for sprite pixels
+			end else begin
+				colorDataBox = food_color;  // Default to food color
+			end
+		end
+	end 
 
 	// Assign to output color from register if active
 	wire[BITS_PER_COLOR-1:0] colorOut;
@@ -156,4 +180,3 @@ module VGAController(
 	assign {VGA_R, VGA_G, VGA_B} = colorOut;
 	
 endmodule
-
