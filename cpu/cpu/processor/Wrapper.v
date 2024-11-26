@@ -67,7 +67,7 @@ module Wrapper (input clk_100mhz,
 
 
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "block_follow";
+	localparam INSTR_FILE = "tail_die";
 	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
@@ -105,7 +105,10 @@ module Wrapper (input clk_100mhz,
 		.dataOut(dmemDataOut));
 
 
-	 assign memDataOut = (memAddr[11:0] == 0) ? button : dmemDataOut; 
+	 assign memDataOut = (memAddr[11:0] == 0) ? button :
+	                     (memAddr[11:0] == 7) ? random_x :
+	                     (memAddr[11:0] == 8) ? random_y :
+	                      dmemDataOut;
 
 	 reg [3199:0] x_values_reg, y_values_reg;
 	 wire [3199:0] x_values, y_values;
@@ -133,6 +136,21 @@ module Wrapper (input clk_100mhz,
 		end
 	end
 	
+	reg[31:0] random_x, random_y;
+	initial begin
+	   random_x = 5;
+	   random_y = 5;
+	end
+	
+	wire[3:0] rand_x_orig, rand_y_orig;
+	
+	
+	LFSR random_gen(.clk(clk_25), .x(rand_x_orig), .y(rand_y_orig));
+	
+	always @(posedge clk_25 ) begin
+	   random_x = {27'b0, rand_x_orig};
+	   random_y = {27'b0, rand_y_orig};
+	end
 	
 	
 
@@ -147,16 +165,38 @@ module Wrapper (input clk_100mhz,
 	end
 
 	assign game_done = game_done_reg;
+	
+	
+	reg[31:0] food_x_reg, food_y_reg;
+	wire[31:0] food_x, food_y;
+	
+	assign food_x  = food_x_reg;
+	assign food_y  = food_y_reg;
+	
+	initial begin
+	   food_x_reg = 5;
+	   food_y_reg = 5;
+	end
+	
+	always @(posedge clk_25) begin
+	   if(memAddr[11:0] == 9 && mwe) begin
+	       food_x_reg = memDataIn;
+	   end
+	   if(memAddr[11:0] == 10 && mwe) begin
+	       food_y_reg = memDataIn;
+	   end
+	end
 
 
 
-	 VGAController control(.clk(clk_100mhz), .clk25(clk_25), .reset(reset), .x_values(x_values), .y_values(y_values), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
+	 VGAController control(.clk(clk_100mhz), .clk25(clk_25), .reset(reset), .x_values(x_values), .y_values(y_values), .food_x(food_x), .food_y(food_y), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
 
 	wire [31:0] led_bits;
-	assign led_bits = memDataIn;
+	assign led_bits = rand_x_orig;
 
 	wire led_we;
-	assign led_we = (mwe && memAddr[11:0] == 302) ? 1'b1 : 1'b0;
+	//assign led_we = (mwe && memAddr[11:0] == 302) ? 1'b1 : 1'b0;
+	assign led_we = 1'b1;
 
 
 	led light(.leds(led_bits), .LED(LED), .clk(clk_25), .led_we(led_we));
