@@ -41,8 +41,7 @@ module VGAController(
 	// Image Data to Map Pixel Location to Color Address
 	localparam 
 		PIXEL_COUNT = VIDEO_WIDTH*VIDEO_HEIGHT, 	             // Number of pixels on the screen
-		PIXEL_ADDRESS_WIDTH = $clog2(PIXEL_COUNT) + 1,           // Use built in log2 command
-		
+
 		SPRITE_COUNT = 94, 
 		SPRITE_ADDRESS_WIDTH = $clog2(SPRITE_COUNT*2500) + 1,
 		PIXEL_ADDRESS_WIDTH = $clog2(PIXEL_COUNT) + 1,           // Use built in log2 command
@@ -83,7 +82,7 @@ module VGAController(
 
 	// SPRITE RAM / CODE
 		RAM_VGA #(
-		.DEPTH(SPRITE_COUNT * 2500), 		       		
+		.DEPTH(SPRITE_COUNT * 1600), 		       		
 		.DATA_WIDTH(1'b1), 		      
 		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
 		.MEMFILE({FILES_PATH, "sprites.mem"}))  
@@ -92,7 +91,12 @@ module VGAController(
 		.addr(sprite_address),					     
 		.dataOut(sprite_colorAddr),				       
 		.wEn(1'b0)); 	
-
+		
+		///////////////////////////////////////////////////////
+        // calculate sprite address 
+		wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;  
+		wire sprite_colorAddr; //output of sprite colors 
+		assign sprite_address = ((y - map_height_min) % 40) * 40 + ((x - map_width_min) % 40); //hardcode apple sprite address to 1st??? (check tho)
 
 ///////////////////////////////////////////////////////
 
@@ -115,8 +119,8 @@ module VGAController(
 	integer box_size = 40; 	//tile size
 
 	// Temporary register to hold the snake's color for the current pixel
-	integer box_color = 12'd8;  // Green for active segments
-	integer food_color = 12'd12;
+	integer box_color = 12'H0F0;  // Green for active segments
+	integer food_color = 12'HF00;
 
 	reg [31:0] current_x;
 	reg [31:0] current_y;
@@ -124,12 +128,13 @@ module VGAController(
 
 	reg[BITS_PER_COLOR-1:0] colorDataBox; 
 	reg [31:0] snake_pos_x, snake_pos_y, food_pos_x, food_pos_y; 
+	reg in_foodbox;
 
     //try slowing clock with clock division
 	always @(posedge clk) begin
 		colorDataBox = colorData;
 		
-		for (j = 0; j < 3; j = j + 1) begin
+		for (j = 0; j < 100; j = j + 1) begin
 			current_x = x_values[32*(j) +: 32];
 			current_y = y_values[32*(j) +: 32];
 			//current_x = x_values[31:0];
@@ -153,21 +158,13 @@ module VGAController(
 		food_pos_x = board_x_start + food_x * tile_size;
 		food_pos_y = board_y_start + food_y * tile_size;
 
-		wire in_foodbox;
-		assign in_foodbox = ((x >= (food_pos_x)) && (x < (food_pos_x + box_size))) && ((y >= (food_pos_y)) && (y < (food_pos_y + box_size))); 
-
-		///////////////////////////////////////////////////////
-		// calculate sprite address 
-		wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;  
-		wire sprite_colorAddr; //output of sprite colors 
-		assign sprite_address = (y % 50) * 50 + (x % 50); //hardcode apple sprite address to 1st??? (check tho)
 
 		//check if red box or sprite 
-		if (in_foodbox) begin
+		if (((x >= (food_pos_x)) && (x < (food_pos_x + box_size))) && ((y >= (food_pos_y)) && (y < (food_pos_y + box_size)))) begin
 			if (sprite_colorAddr == 1'b1) begin
-				colorDataBox = 12'h000;  // black for sprite pixels
+				colorDataBox = food_color;  // black for sprite pixels
 			end else begin
-				colorDataBox = food_color;  // Default to food color
+				colorDataBox = colorData;  // Default to food color
 			end
 		end
 	end 

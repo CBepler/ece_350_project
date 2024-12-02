@@ -12,14 +12,15 @@ module LFSR(
     // Feedback computation (XOR of selected taps)
     assign x_feed = x_reg[0] ^ x_reg[3]; 
     assign y_feed = y_reg[0] ^ y_reg[3]; 
+    
+    initial begin
+       // Initialize the registers to a non-zero value 
+       x_reg <= 4'b0011;  // Non-zero initializations
+       y_reg <= 4'b1011; 
+    end 
 
     // Always block to handle the shift register logic
-    always @(posedge clk or posedge reset) begin
-        initial begin
-            // Initialize the registers to a non-zero value 
-            x_reg <= 4'b0011;  // Non-zero initializations
-            y_reg <= 4'b1011; 
-        end 
+    always @(posedge clk) begin
 
         begin
             // Shift the registers and insert feedback into the LSB
