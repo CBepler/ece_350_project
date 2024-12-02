@@ -115,13 +115,14 @@ module VGAController(
     wire apple_colorAddr; //output of apple color 
     assign apple_address = ((y - board_y_start) % 40) * 40 + ((x - board_x_start) % 40); //hardcode apple sprite address to 1st??? (check tho)
 
+	//calculate digits for sprite
+	integer score_digits[2:0];	//array to store individual digits 
 
 	// calculate sprite address 
-	wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;
-	wire sprite_colorAddr, score_x_start, score_y_start; //output of sprite colors
-	assign score_x_start = 473; 
-	assign score_y_start = 48; 
-	assign sprite_address = (x - score_x_start) + 50 * (y - score_y_start); //check this value
+	reg[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;
+	wire sprite_colorAddr;
+	integer score_x_start = 473;
+	integer score_y_start = 48; //output of sprite colors
 
 ///////////////////////////////////////////////////////
 	wire active, screenEnd;
@@ -184,16 +185,27 @@ module VGAController(
 			end
 		end
 
+		//calc digs for sprite
+		score_digits[0] = score % 10; 			//ones place 
+		score_digits[1] = (score / 10) % 10; 	//tenths place
+		score_digits[2] = (score / 100) % 10; 	//hundredths 
 
         //check if in sprite display location // 
     	if ((x >= score_x_start) && (x < (score_x_start + 50 * 3)) && (y >= score_y_start) && (y < (score_y_start + 50))) begin
-			
+
+			// calc which digit we're currently on
+        	integer digit_index = (x - score_x_start) / 50; //divides X coordinate into sections 
+        	integer current_digit = score_digits[3 - digit_index - 1];	//calculates what digit we're one based on what X section
+
+        	assign sprite_address = (current_digit * 2500) + 	//assign it the correct sprite.mem values 
+									((x - score_x_start)%50) + 	//X offset within digit
+									((y - score_y_start)*50); 	//Y offset within digit
+
 			if(sprite_colorAddr == 1'b1) begin 
 				colorDataBox = 12'H000; //black
 			end else begin 
 				colorDataBox = colorData; //default to background
 			end 
-
 		end
 
 	end
