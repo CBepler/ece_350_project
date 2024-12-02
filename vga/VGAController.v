@@ -46,8 +46,9 @@ module VGAController(
 		PIXEL_COUNT = VIDEO_WIDTH*VIDEO_HEIGHT, 	             // Number of pixels on the screen
 
 		SPRITE_COUNT = 94, 
+		APPLE_COUNT = 94, 
 		SPRITE_ADDRESS_WIDTH = $clog2(SPRITE_COUNT*2500) + 1,
-        APPLE_ADDRESS_WIDTH = $clog2(SPRITE_COUNT*2500) + 1,
+        APPLE_ADDRESS_WIDTH = $clog2(APPLE_COUNT*2500) + 1,
 		PIXEL_ADDRESS_WIDTH = $clog2(PIXEL_COUNT) + 1,           // Use built in log2 command
 
 		BITS_PER_COLOR = 12, 	  								 // Nexys A7 uses 12 bits/color
