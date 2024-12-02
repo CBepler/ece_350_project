@@ -188,8 +188,29 @@ module Wrapper (input clk_100mhz,
 	end
 
 
+	reg[31:0] current_score_reg, high_score_reg;
+	wire[31:0] current_score, high_score;
+	
+	assign current_score  = current_score_reg;
+	assign high_score  = high_score_reg;
+	
+	initial begin
+	   current_score_reg = 0;
+	   high_score_reg = 0;
+	end
+	
+	always @(posedge clk_25) begin
+	   if(memAddr[11:0] == 14 && mwe) begin
+	       current_score_reg = memDataIn;
+	   end
+	   if(memAddr[11:0] == 15 && mwe) begin
+	       high_score_reg = memDataIn;
+	   end
+	end
 
-	 VGAController control(.clk(clk_100mhz), .clk25(clk_25), .reset(reset), .x_values(x_values), .y_values(y_values), .food_x(food_x), .food_y(food_y), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
+
+
+	 VGAController control(.clk(clk_100mhz), .clk25(clk_25), .reset(reset), .x_values(x_values), .y_values(y_values), .food_x(food_x), .score(current_score), .high_score(high_score), .food_y(food_y), .game_done(game_done), .hSync(hSync), .vSync(vSync), .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B), .ps2_clk(ps2_clk), .ps2_data(ps2_data));
 
 	wire [31:0] led_bits;
 	assign led_bits = rand_x_orig;
