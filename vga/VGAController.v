@@ -8,6 +8,9 @@ module VGAController(
 	input game_done,
 	input [31:0] food_x,
 	input [31:0] food_y,
+    input [31:0] score, 
+	input [31:0] high_score, 
+
 	output hSync, 		// H Sync Signal
 	output vSync, 		// Veritcal Sync Signal
 	output[3:0] VGA_R,  // Red Signal Bits
@@ -44,9 +47,9 @@ module VGAController(
 
 		SPRITE_COUNT = 94, 
 		SPRITE_ADDRESS_WIDTH = $clog2(SPRITE_COUNT*2500) + 1,
+        APPLE_ADDRESS_WIDTH = $clog2(SPRITE_COUNT*2500) + 1,
 		PIXEL_ADDRESS_WIDTH = $clog2(PIXEL_COUNT) + 1,           // Use built in log2 command
-		ASCII_ADDRESS_WIDTH = $clog2(256) + 1, 
-		
+
 		BITS_PER_COLOR = 12, 	  								 // Nexys A7 uses 12 bits/color
 		PALETTE_COLOR_COUNT = 256, 								 // Number of Colors available
 		PALETTE_ADDRESS_WIDTH = $clog2(PALETTE_COLOR_COUNT) + 1; // Use built in log2 Command
@@ -81,8 +84,8 @@ module VGAController(
 		.wEn(1'b0)); 						       // We're always 
 
 	// SPRITE RAM / CODE
-		RAM_VGA #(
-		.DEPTH(SPRITE_COUNT * 1600), 		       		
+	RAM_VGA #(
+		.DEPTH(SPRITE_COUNT * 2500), 		       		
 		.DATA_WIDTH(1'b1), 		      
 		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
 		.MEMFILE({FILES_PATH, "sprites.mem"}))  
@@ -91,15 +94,33 @@ module VGAController(
 		.addr(sprite_address),					     
 		.dataOut(sprite_colorAddr),				       
 		.wEn(1'b0)); 	
+
+    // APPLE RAM / CODE
+	RAM_VGA #(
+		.DEPTH(SPRITE_COUNT * 1600), 		       		
+		.DATA_WIDTH(1'b1), 		      
+		.ADDRESS_WIDTH(APPLE_ADDRESS_WIDTH),    
+		.MEMFILE({FILES_PATH, "apple.mem"}))  
+	SpriteData(
+		.clk(clk), 							   	   
+		.addr(apple_address),					     
+		.dataOut(apple_colorAddr),				       
+		.wEn(1'b0)); 	
+
 		
-		///////////////////////////////////////////////////////
-        // calculate sprite address 
-		wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;  
-		wire sprite_colorAddr; //output of sprite colors 
-		assign sprite_address = ((y - map_height_min) % 40) * 40 + ((x - map_width_min) % 40); //hardcode apple sprite address to 1st??? (check tho)
+    ///////////////////////////////////////////////////////
+    // calculate apple address 
+    wire[APPLE_ADDRESS_WIDTH-1:0] apple_address;  
+    wire apple_colorAddr; //output of apple color 
+    assign apple_address = ((y - map_height_min) % 40) * 40 + ((x - map_width_min) % 40); //hardcode apple sprite address to 1st??? (check tho)
+
+
+	// calculate sprite address 
+	wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;
+	wire sprite_colorAddr; //output of sprite colors
+	assign sprite_address = (x - score_x_start) + 50* (y - score_y_start); //check this value
 
 ///////////////////////////////////////////////////////
-
 	wire active, screenEnd;
 	wire[31:0] x;
 	wire[31:0] y;
@@ -128,13 +149,12 @@ module VGAController(
 
 	reg[BITS_PER_COLOR-1:0] colorDataBox; 
 	reg [31:0] snake_pos_x, snake_pos_y, food_pos_x, food_pos_y; 
-	reg in_foodbox;
 
     //try slowing clock with clock division
 	always @(posedge clk) begin
 		colorDataBox = colorData;
 		
-		for (j = 0; j < 100; j = j + 1) begin
+		for (j = 0; j < 2; j = j + 1) begin
 			current_x = x_values[32*(j) +: 32];
 			current_y = y_values[32*(j) +: 32];
 			//current_x = x_values[31:0];
@@ -161,13 +181,27 @@ module VGAController(
 
 		//check if red box or sprite 
 		if (((x >= (food_pos_x)) && (x < (food_pos_x + box_size))) && ((y >= (food_pos_y)) && (y < (food_pos_y + box_size)))) begin
-			if (sprite_colorAddr == 1'b1) begin
-				colorDataBox = food_color;  // black for sprite pixels
+			if (apple_colorAddr == 1'b1) begin
+				colorDataBox = food_color;  // red for apple pixels
 			end else begin
-				colorDataBox = colorData;  // Default to food color
+				colorDataBox = colorData;  // Default to background
 			end
 		end
-	end 
+
+
+        //check if in sprite display location // 
+    	if ((x >= score_x_start) && (x < score_x_start + 50 * 3 /*num of dig to display -100*/ ) &&
+        	(y >= score_y_start) && (y < score_y_start + 50)) begin
+			
+			if(sprite_colorAddr == 1'b1) begin 
+				colorDataBox = 12'H000; //black
+			end else begin 
+				colorDataBox = colorData; //default to background
+			end 
+
+		end
+
+	end
 
 	// Assign to output color from register if active
 	wire[BITS_PER_COLOR-1:0] colorOut;
