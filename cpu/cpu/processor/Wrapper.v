@@ -54,9 +54,9 @@ module Wrapper (input clk_100mhz,
 	      .clk_in1(clk_100mhz)
 	    );
 	    
-	    wire [2:0] button;
-	    
-	    buttons b(.BTNU(BTNU), .BTNR(BTNR), .BTND(BTND), .BTNL(BTNL), .clk(clock), .button_reg(button));
+	wire [2:0] button;
+	
+	buttons b(.BTNU(BTNU), .BTNR(BTNR), .BTND(BTND), .BTNL(BTNL), .clk(clock), .button_reg(button));
 
 
 	wire rwe, mwe;

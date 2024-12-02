@@ -28,6 +28,10 @@ module buttons(
     input clk,
     output reg [2:0] button_reg
     );
+
+    initial begin
+        button_reg = 2;
+    end
         
     always @(posedge clk) begin
         if(BTNU) begin
@@ -41,9 +45,6 @@ module buttons(
         end
         else if(BTNL) begin
             button_reg <= 4;
-        end
-        else begin
-            button_reg <= 0;
         end
     end
         
