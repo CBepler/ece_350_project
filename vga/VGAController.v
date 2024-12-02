@@ -101,7 +101,7 @@ module VGAController(
 		.DATA_WIDTH(1'b1), 		      
 		.ADDRESS_WIDTH(APPLE_ADDRESS_WIDTH),    
 		.MEMFILE({FILES_PATH, "apple.mem"}))  
-	SpriteData(
+	AppleData(
 		.clk(clk), 							   	   
 		.addr(apple_address),					     
 		.dataOut(apple_colorAddr),				       
@@ -112,13 +112,15 @@ module VGAController(
     // calculate apple address 
     wire[APPLE_ADDRESS_WIDTH-1:0] apple_address;  
     wire apple_colorAddr; //output of apple color 
-    assign apple_address = ((y - map_height_min) % 40) * 40 + ((x - map_width_min) % 40); //hardcode apple sprite address to 1st??? (check tho)
+    assign apple_address = ((y - board_y_start) % 40) * 40 + ((x - board_x_start) % 40); //hardcode apple sprite address to 1st??? (check tho)
 
 
 	// calculate sprite address 
 	wire[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;
-	wire sprite_colorAddr; //output of sprite colors
-	assign sprite_address = (x - score_x_start) + 50* (y - score_y_start); //check this value
+	wire sprite_colorAddr, score_x_start, score_y_start; //output of sprite colors
+	assign score_x_start = 473; 
+	assign score_y_start = 48; 
+	assign sprite_address = (x - score_x_start) + 50 * (y - score_y_start); //check this value
 
 ///////////////////////////////////////////////////////
 	wire active, screenEnd;
@@ -126,13 +128,6 @@ module VGAController(
 	wire[31:0] y;
 
 	//initialize map borders
-	wire[31:0] map_width_min, map_width_max;
-	wire[31:0] map_height_min, map_height_max; 
-	assign map_width_min = 48;
-	assign map_width_max = 449;
-	assign map_height_min = 48;
-	assign map_height_max = 444;
-
 	integer board_x_start = 48;
 	integer board_y_start = 48;
 	integer tile_size = 40;
@@ -190,8 +185,7 @@ module VGAController(
 
 
         //check if in sprite display location // 
-    	if ((x >= score_x_start) && (x < score_x_start + 50 * 3 /*num of dig to display -100*/ ) &&
-        	(y >= score_y_start) && (y < score_y_start + 50)) begin
+    	if ((x >= score_x_start) && (x < (score_x_start + 50 * 3)) && (y >= score_y_start) && (y < (score_y_start + 50))) begin
 			
 			if(sprite_colorAddr == 1'b1) begin 
 				colorDataBox = 12'H000; //black
