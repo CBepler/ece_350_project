@@ -90,7 +90,7 @@ module VGAController(
 		.DATA_WIDTH(1'b1), 		      
 		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
 		.MEMFILE({FILES_PATH, "sprites.mem"}))  
-	SpriteData(
+	ScoreData(
 		.clk(clk), 							   	   
 		.addr(score_address),					     
 		.dataOut(score_colorAddr),				       
@@ -102,7 +102,7 @@ module VGAController(
 		.DATA_WIDTH(1'b1), 		      
 		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
 		.MEMFILE({FILES_PATH, "sprites.mem"}))  
-	SpriteData(
+	HighScoreData(
 		.clk(clk), 							   	   
 		.addr(high_score_address),					     
 		.dataOut(high_score_colorAddr),				       
@@ -132,14 +132,15 @@ module VGAController(
 	integer high_score_digits[2:0]; 
 
 	// calculate sprite address 
-	reg[SPRITE_ADDRESS_WIDTH-1:0] score_address;
-	reg[SPRITE_ADDRESS_WIDTH-1:0] high_score_address; 
+	reg[SPRITE_ADDRESS_WIDTH-1:0] score_address, high_score_address; 
 
 	wire score_colorAddr;
 	integer score_x_start = 473;
 	integer score_y_start = 88; //output of sprite colors
 	integer high_score_x_start = 473;
 	integer high_score_y_start = 208;
+	integer digit_index, digit_index0, current_digit, current_digit0; 
+        	
 
 ///////////////////////////////////////////////////////
 	wire active, screenEnd;
@@ -215,10 +216,10 @@ module VGAController(
     	if ((x >= score_x_start) && (x < (score_x_start + 50 * 3)) && (y >= score_y_start) && (y < (score_y_start + 50))) begin
 
 			// calc which digit we're currently on
-        	integer digit_index = (x - score_x_start) / 50; //divides X coordinate into sections 
-        	integer current_digit = score_digits[3 - digit_index - 1];	//calculates what digit we're one based on what X section
+        	digit_index = (x - score_x_start) / 50; //divides X coordinate into sections 
+        	current_digit = score_digits[3 - digit_index - 1];	//calculates what digit we're one based on what X section
 
-        	assign score_address = (current_digit * 2500) + 	//assign it the correct sprite.mem values 
+        	score_address = (current_digit * 2500) + 	//assign it the correct sprite.mem values 
 									((x - score_x_start)%50) + 	//X offset within digit
 									((y - score_y_start)*50); 	//Y offset within digit
 
@@ -234,15 +235,15 @@ module VGAController(
     	if ((x >= high_score_x_start) && (x < (high_score_x_start + 50 * 3)) && (y >= high_score_y_start) && (y < (high_score_y_start + 50))) begin
 
 			// calc which digit we're currently on
-        	integer digit_index0 = (x - high_score_x_start) / 50; //divides X coordinate into sections 
-        	integer current_digit0 = score_digits[3 - digit_index0 - 1];	//calculates what digit we're one based on what X section
+        	digit_index0 = (x - high_score_x_start) / 50; //divides X coordinate into sections 
+        	current_digit0 = high_score_digits[3 - digit_index0 - 1];	//calculates what digit we're one based on what X section
 
-        	assign high_score_address = (current_digit0 * 2500) + 	//assign it the correct sprite.mem values 
+        	high_score_address = (current_digit0 * 2500) + 	//assign it the correct sprite.mem values 
 									((x - high_score_x_start)%50) + 	//X offset within digit
 									((y - high_score_y_start)*50); 	//Y offset within digit
 
 
-			if(score_colorAddr == 1'b1) begin 
+			if(high_score_colorAddr == 1'b1) begin 
 				colorDataBox = 12'H000; //black
 			end else begin 
 				colorDataBox = colorData; //default to background
