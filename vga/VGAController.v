@@ -84,7 +84,7 @@ module VGAController(
 		.dataOut(colorData),				       // Color at current pixel
 		.wEn(1'b0)); 						       // We're always 
 
-	// SPRITE RAM / CODE
+	// SCORE RAM / CODE
 	RAM_VGA #(
 		.DEPTH(SPRITE_COUNT * 2500), 		       		
 		.DATA_WIDTH(1'b1), 		      
@@ -92,8 +92,20 @@ module VGAController(
 		.MEMFILE({FILES_PATH, "sprites.mem"}))  
 	SpriteData(
 		.clk(clk), 							   	   
-		.addr(sprite_address),					     
-		.dataOut(sprite_colorAddr),				       
+		.addr(score_address),					     
+		.dataOut(score_colorAddr),				       
+		.wEn(1'b0)); 	
+
+	// HIGH SCORE RAM / CODE
+	RAM_VGA #(
+		.DEPTH(SPRITE_COUNT * 2500), 		       		
+		.DATA_WIDTH(1'b1), 		      
+		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
+		.MEMFILE({FILES_PATH, "sprites.mem"}))  
+	SpriteData(
+		.clk(clk), 							   	   
+		.addr(high_score_address),					     
+		.dataOut(high_score_colorAddr),				       
 		.wEn(1'b0)); 	
 
     // APPLE RAM / CODE
@@ -117,12 +129,17 @@ module VGAController(
 
 	//calculate digits for sprite
 	integer score_digits[2:0];	//array to store individual digits 
+	integer high_score_digits[2:0]; 
 
 	// calculate sprite address 
-	reg[SPRITE_ADDRESS_WIDTH-1:0] sprite_address;
-	wire sprite_colorAddr;
+	reg[SPRITE_ADDRESS_WIDTH-1:0] score_address;
+	reg[SPRITE_ADDRESS_WIDTH-1:0] high_score_address; 
+
+	wire score_colorAddr;
 	integer score_x_start = 473;
-	integer score_y_start = 48; //output of sprite colors
+	integer score_y_start = 88; //output of sprite colors
+	integer high_score_x_start = 473;
+	integer high_score_y_start = 208;
 
 ///////////////////////////////////////////////////////
 	wire active, screenEnd;
@@ -190,18 +207,42 @@ module VGAController(
 		score_digits[1] = (score / 10) % 10; 	//tenths place
 		score_digits[2] = (score / 100) % 10; 	//hundredths 
 
-        //check if in sprite display location // 
+		high_score_digits[0] = high_score % 10; 			//ones place 
+		high_score_digits[1] = (high_score / 10) % 10; 	//tenths place
+		high_score_digits[2] = (high_score / 100) % 10; 	//hundredths 
+
+        //check if in score display location // 
     	if ((x >= score_x_start) && (x < (score_x_start + 50 * 3)) && (y >= score_y_start) && (y < (score_y_start + 50))) begin
 
 			// calc which digit we're currently on
         	integer digit_index = (x - score_x_start) / 50; //divides X coordinate into sections 
         	integer current_digit = score_digits[3 - digit_index - 1];	//calculates what digit we're one based on what X section
 
-        	assign sprite_address = (current_digit * 2500) + 	//assign it the correct sprite.mem values 
+        	assign score_address = (current_digit * 2500) + 	//assign it the correct sprite.mem values 
 									((x - score_x_start)%50) + 	//X offset within digit
 									((y - score_y_start)*50); 	//Y offset within digit
 
-			if(sprite_colorAddr == 1'b1) begin 
+
+			if(score_colorAddr == 1'b1) begin 
+				colorDataBox = 12'H000; //black
+			end else begin 
+				colorDataBox = colorData; //default to background
+			end 
+		end
+
+		//check if in high score display location // 
+    	if ((x >= high_score_x_start) && (x < (high_score_x_start + 50 * 3)) && (y >= high_score_y_start) && (y < (high_score_y_start + 50))) begin
+
+			// calc which digit we're currently on
+        	integer digit_index0 = (x - high_score_x_start) / 50; //divides X coordinate into sections 
+        	integer current_digit0 = score_digits[3 - digit_index0 - 1];	//calculates what digit we're one based on what X section
+
+        	assign high_score_address = (current_digit0 * 2500) + 	//assign it the correct sprite.mem values 
+									((x - high_score_x_start)%50) + 	//X offset within digit
+									((y - high_score_y_start)*50); 	//Y offset within digit
+
+
+			if(score_colorAddr == 1'b1) begin 
 				colorDataBox = 12'H000; //black
 			end else begin 
 				colorDataBox = colorData; //default to background
