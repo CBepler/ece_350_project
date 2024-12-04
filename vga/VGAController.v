@@ -155,7 +155,12 @@ module VGAController(
 	integer box_size = 40; 	//tile size
 
 	// Temporary register to hold the snake's color for the current pixel
-	integer box_color = 12'H0F0;  // Green for active segments
+	reg [11:0] box_color;  
+	reg [31:0] prev_high_score; 	//change in high score indicator bit 
+	initial begin 
+		box_color = 12'H0F0; //intialize to green 
+	end 
+
 	integer food_color = 12'HF00;
 
 	reg [31:0] current_x;
@@ -168,7 +173,17 @@ module VGAController(
     //try slowing clock with clock division
 	always @(posedge clk) begin
 		colorDataBox = colorData;
+		if(box_color == 0) begin
+			box_color = 12'H00F;
+		end
+		else if(high_score != prev_high_score)begin 
+			box_color = box_color << 4; //change 
+		end
 		
+		prev_high_score = high_score; 
+
+
+
 		for (j = 0; j < 2; j = j + 1) begin
 			current_x = x_values[32*(j) +: 32];
 			current_y = y_values[32*(j) +: 32];
@@ -249,6 +264,7 @@ module VGAController(
 				colorDataBox = colorData; //default to background
 			end 
 		end
+
 
 	end
 
