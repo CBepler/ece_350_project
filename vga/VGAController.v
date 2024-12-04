@@ -217,9 +217,8 @@ module VGAController(
 						//for the first head --> must assign 
 						if(j==0)begin 
         					eyeball_address = (11 * 2500) + 	//assign it the correct sprite.mem values 
-										((x - high_score_x_start)%50) + 	//X offset within digit
-										((y - high_score_y_start)*50); 	//Y offset within digit
-
+										((x - snake_pos_x)%50) + 	//X offset within digit
+										((y - snake_pos_y)*50); 	//Y offset within digit
 						end 
 						
 					end 
