@@ -108,6 +108,18 @@ module VGAController(
 		.dataOut(high_score_colorAddr),				       
 		.wEn(1'b0)); 	
 
+	// HIGH SCORE RAM / CODE
+	RAM_VGA #(
+		.DEPTH(SPRITE_COUNT * 2500), 		       		
+		.DATA_WIDTH(1'b1), 		      
+		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
+		.MEMFILE({FILES_PATH, "sprites.mem"}))  
+	EyesData(
+		.clk(clk), 							   	   
+		.addr(eyeball_address),					     
+		.dataOut(eyeballs_colorAddr),				       
+		.wEn(1'b0)); 	
+
     // APPLE RAM / CODE
 	RAM_VGA #(
 		.DEPTH(SPRITE_COUNT * 1600), 		       		
@@ -132,9 +144,10 @@ module VGAController(
 	integer high_score_digits[2:0]; 
 
 	// calculate sprite address 
-	reg[SPRITE_ADDRESS_WIDTH-1:0] score_address, high_score_address; 
+	reg[SPRITE_ADDRESS_WIDTH-1:0] score_address, high_score_address, eyeball_address; 
 
-	wire score_colorAddr;
+	wire eyeballs_colorAddr; 	//calculate eyeball address 
+	wire score_colorAddr, high_score_colorAddr;
 	integer score_x_start = 473;
 	integer score_y_start = 88; //output of sprite colors
 	integer high_score_x_start = 473;
@@ -170,6 +183,7 @@ module VGAController(
 	reg[BITS_PER_COLOR-1:0] colorDataBox; 
 	reg [31:0] snake_pos_x, snake_pos_y, food_pos_x, food_pos_y; 
 
+
     //try slowing clock with clock division
 	always @(posedge clk) begin
 		colorDataBox = colorData;
@@ -182,9 +196,8 @@ module VGAController(
 		
 		prev_high_score = high_score; 
 
+		for (j = 0; j < 100; j = j + 1) begin
 
-
-		for (j = 0; j < 2; j = j + 1) begin
 			current_x = x_values[32*(j) +: 32];
 			current_y = y_values[32*(j) +: 32];
 			//current_x = x_values[31:0];
@@ -200,6 +213,15 @@ module VGAController(
 						(y < (snake_pos_y + box_size)))) 
 					begin
 						colorDataBox = box_color;		// Assign the calculated color to the VGA output
+
+						//for the first head --> must assign 
+						if(j==0)begin 
+        					eyeball_address = (11 * 2500) + 	//assign it the correct sprite.mem values 
+										((x - high_score_x_start)%50) + 	//X offset within digit
+										((y - high_score_y_start)*50); 	//Y offset within digit
+
+						end 
+						
 					end 
 				end
 		end
@@ -256,7 +278,6 @@ module VGAController(
         	high_score_address = (current_digit0 * 2500) + 	//assign it the correct sprite.mem values 
 									((x - high_score_x_start)%50) + 	//X offset within digit
 									((y - high_score_y_start)*50); 	//Y offset within digit
-
 
 			if(high_score_colorAddr == 1'b1) begin 
 				colorDataBox = 12'H000; //black
