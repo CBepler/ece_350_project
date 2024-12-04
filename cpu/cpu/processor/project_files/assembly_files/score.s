@@ -29,7 +29,7 @@ sw $r1, 12($r0)   #food y position
 start_loop:
 
 #stall loop
-addi $r3, $r0, 350   #r3 = 350
+addi $r3, $r0, 280   #r3 = 280
 addi $r4, $r0, 0     #r4 =0
 addi $r1, $r0, 30000 #r1 = 30000
 outer_stall_loop:
