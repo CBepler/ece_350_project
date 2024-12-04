@@ -67,7 +67,7 @@ module Wrapper (input clk_100mhz,
 
 
 	// ADD YOUR MEMORY FILE HERE
-	localparam INSTR_FILE = "tail_die";
+	localparam INSTR_FILE = "score";
 	
 	// Main Processing Unit
 	processor CPU(.clock(clock), .reset(reset), 
