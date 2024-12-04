@@ -90,7 +90,7 @@ module VGAController(
 		.DATA_WIDTH(1'b1), 		      
 		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
 		.MEMFILE({FILES_PATH, "sprites.mem"}))  
-	SpriteData(
+	ScoreData(
 		.clk(clk), 							   	   
 		.addr(score_address),					     
 		.dataOut(score_colorAddr),				       
@@ -102,7 +102,7 @@ module VGAController(
 		.DATA_WIDTH(1'b1), 		      
 		.ADDRESS_WIDTH(SPRITE_ADDRESS_WIDTH),    
 		.MEMFILE({FILES_PATH, "sprites.mem"}))  
-	SpriteData(
+	HighScoreData(
 		.clk(clk), 							   	   
 		.addr(high_score_address),					     
 		.dataOut(high_score_colorAddr),				       
@@ -132,14 +132,15 @@ module VGAController(
 	integer high_score_digits[2:0]; 
 
 	// calculate sprite address 
-	reg[SPRITE_ADDRESS_WIDTH-1:0] score_address;
-	reg[SPRITE_ADDRESS_WIDTH-1:0] high_score_address; 
+	reg[SPRITE_ADDRESS_WIDTH-1:0] score_address, high_score_address; 
 
 	wire score_colorAddr;
 	integer score_x_start = 473;
 	integer score_y_start = 88; //output of sprite colors
 	integer high_score_x_start = 473;
 	integer high_score_y_start = 208;
+	integer digit_index, digit_index0, current_digit, current_digit0; 
+        	
 
 ///////////////////////////////////////////////////////
 	wire active, screenEnd;
@@ -154,7 +155,12 @@ module VGAController(
 	integer box_size = 40; 	//tile size
 
 	// Temporary register to hold the snake's color for the current pixel
-	integer box_color = 12'H0F0;  // Green for active segments
+	reg [11:0] box_color;  
+	reg [31:0] prev_high_score; 	//change in high score indicator bit 
+	initial begin 
+		box_color = 12'H0F0; //intialize to green 
+	end 
+
 	integer food_color = 12'HF00;
 
 	reg [31:0] current_x;
@@ -167,7 +173,17 @@ module VGAController(
     //try slowing clock with clock division
 	always @(posedge clk) begin
 		colorDataBox = colorData;
+		if(box_color == 0) begin
+			box_color = 12'H00F;
+		end
+		else if(high_score != prev_high_score)begin 
+			box_color = box_color << 4; //change 
+		end
 		
+		prev_high_score = high_score; 
+
+
+
 		for (j = 0; j < 2; j = j + 1) begin
 			current_x = x_values[32*(j) +: 32];
 			current_y = y_values[32*(j) +: 32];
@@ -215,10 +231,10 @@ module VGAController(
     	if ((x >= score_x_start) && (x < (score_x_start + 50 * 3)) && (y >= score_y_start) && (y < (score_y_start + 50))) begin
 
 			// calc which digit we're currently on
-        	integer digit_index = (x - score_x_start) / 50; //divides X coordinate into sections 
-        	integer current_digit = score_digits[3 - digit_index - 1];	//calculates what digit we're one based on what X section
+        	digit_index = (x - score_x_start) / 50; //divides X coordinate into sections 
+        	current_digit = score_digits[3 - digit_index - 1];	//calculates what digit we're one based on what X section
 
-        	assign score_address = (current_digit * 2500) + 	//assign it the correct sprite.mem values 
+        	score_address = (current_digit * 2500) + 	//assign it the correct sprite.mem values 
 									((x - score_x_start)%50) + 	//X offset within digit
 									((y - score_y_start)*50); 	//Y offset within digit
 
@@ -234,20 +250,21 @@ module VGAController(
     	if ((x >= high_score_x_start) && (x < (high_score_x_start + 50 * 3)) && (y >= high_score_y_start) && (y < (high_score_y_start + 50))) begin
 
 			// calc which digit we're currently on
-        	integer digit_index0 = (x - high_score_x_start) / 50; //divides X coordinate into sections 
-        	integer current_digit0 = score_digits[3 - digit_index0 - 1];	//calculates what digit we're one based on what X section
+        	digit_index0 = (x - high_score_x_start) / 50; //divides X coordinate into sections 
+        	current_digit0 = high_score_digits[3 - digit_index0 - 1];	//calculates what digit we're one based on what X section
 
-        	assign high_score_address = (current_digit0 * 2500) + 	//assign it the correct sprite.mem values 
+        	high_score_address = (current_digit0 * 2500) + 	//assign it the correct sprite.mem values 
 									((x - high_score_x_start)%50) + 	//X offset within digit
 									((y - high_score_y_start)*50); 	//Y offset within digit
 
 
-			if(score_colorAddr == 1'b1) begin 
+			if(high_score_colorAddr == 1'b1) begin 
 				colorDataBox = 12'H000; //black
 			end else begin 
 				colorDataBox = colorData; //default to background
 			end 
 		end
+
 
 	end
 
