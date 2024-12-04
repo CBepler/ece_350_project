@@ -212,14 +212,24 @@ module VGAController(
 						((y >= (snake_pos_y)) && 
 						(y < (snake_pos_y + box_size)))) 
 					begin
-						colorDataBox = box_color;		// Assign the calculated color to the VGA output
 
-						//for the first head --> must assign 
 						if(j==0)begin 
         					eyeball_address = (11 * 2500) + 	//assign it the correct sprite.mem values 
 										((x - snake_pos_x)%50) + 	//X offset within digit
 										((y - snake_pos_y)*50); 	//Y offset within digit
+
+							if(eyeballs_colorAddr == 1'b1)begin
+										colorDataBox = 12'H00;
+										end else begin 
+										colorDataBox = box_color; 
+										end 
 						end 
+						
+						else begin 
+						colorDataBox = box_color; 
+						end 
+
+						//for the first head --> must assign 
 						
 					end 
 				end
